@@ -24,14 +24,13 @@ export async function GET(req: Request) {
         id: users.id,
         name: users.name,
         username: users.username,
-        email: users.email,
         avatarUrl: users.avatarUrl,
         isVerified: users.isVerified,
       },
     })
     .from(posts)
     .innerJoin(users, eq(posts.userId, users.id))
-    .orderBy(desc(posts.viewsCount), desc(posts.likesCount), desc(posts.createdAt))
+    .orderBy(desc(posts.likesCount), desc(posts.createdAt))
     .limit(60);
 
   const postIds = rows.map((post) => post.id);
@@ -43,6 +42,8 @@ export async function GET(req: Request) {
     posts: rows.map((post) => ({
       ...post,
       media: mediaRows.filter((media) => media.postId === post.id),
+      isLiked: false,
+      isSaved: false,
     })),
   });
 }

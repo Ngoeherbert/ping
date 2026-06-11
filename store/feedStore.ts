@@ -118,12 +118,15 @@ export const useFeedStore = create<FeedState>((set, get) => ({
   },
 
   savePost: async (postId) => {
+    const wasSaved = Boolean(get().posts.find((post) => post.id === postId)?.isSaved);
     set((state) => ({
       posts: state.posts.map((post) =>
         post.id === postId ? { ...post, isSaved: !post.isSaved } : post,
       ),
     }));
-    await fetch(`${API_URL}/api/posts/${postId}/save`, { method: 'POST' });
+    await fetch(`${API_URL}/api/posts/${postId}/save`, {
+      method: wasSaved ? 'DELETE' : 'POST',
+    });
   },
 
   deletePost: async (postId) => {

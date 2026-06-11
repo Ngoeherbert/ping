@@ -36,7 +36,7 @@ export async function GET(req: Request) {
     .from(posts)
     .innerJoin(users, eq(posts.userId, users.id))
     .where(and(eq(posts.type, 'reel'), eq(posts.isArchived, false)))
-    .orderBy(desc(posts.createdAt))
+    .orderBy(desc(posts.viewsCount), desc(posts.createdAt))
     .limit(limit + 1)
     .offset(offset);
 
@@ -51,6 +51,8 @@ export async function GET(req: Request) {
     reels: reels.map((reel) => ({
       ...reel,
       media: mediaRows.filter((media) => media.postId === reel.id),
+      isLiked: false,
+      isSaved: false,
     })),
     hasMore,
   });

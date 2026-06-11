@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { comments, posts, users } from '@/db/schema';
+import { comments, notifications, posts, users } from '@/db/schema';
 import { jsonResponse, requireAuth } from '@/lib/apiMiddleware';
 import { desc, eq, sql } from 'drizzle-orm';
 import type { Comment } from '@/types';
@@ -78,7 +78,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     .from(comments)
     .innerJoin(users, eq(comments.userId, users.id))
     .where(eq(comments.postId, params.id))
-    .orderBy(desc(comments.createdAt));
+    .orderBy(desc(comments.createdAt))
+    .limit(50);
 
   return jsonResponse({ comments: nestComments(rows) });
 }
@@ -91,7 +92,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const content = typeof body.content === 'string' ? body.content.trim() : '';
   const parentId = typeof body.parentId === 'string' ? body.parentId : null;
 
-  if (!content) return jsonResponse({ error: 'Comment content is required' }, 400);
+  if (!content) return jsonResponse({ error: 'Content required' }, 400);
 
   const [created] = await db
     .insert(comments)
@@ -102,6 +103,21 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     .update(posts)
     .set({ commentsCount: sql`comments_count + 1` })
     .where(eq(posts.id, params.id));
+
+  const [post] = await db
+    .select({ userId: posts.userId })
+    .from(posts)
+    .where(eq(posts.id, params.id));
+
+  if (post && post.userId !== userId) {
+    await db.insert(notifications).values({
+      userId: post.userId,
+      actorId: userId!,
+      type: 'comment',
+      postId: params.id,
+      commentId: created.id,
+    });
+  }
 
   const [comment] = await db
     .select({

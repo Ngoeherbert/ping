@@ -1,7 +1,7 @@
 import { db } from '@/db';
-import { postMedia, posts, users } from '@/db/schema';
+import { hashtags, postMedia, posts, users } from '@/db/schema';
 import { jsonResponse, requireAuth } from '@/lib/apiMiddleware';
-import { desc, eq, ilike, inArray, or } from 'drizzle-orm';
+import { desc, ilike, inArray, or } from 'drizzle-orm';
 
 export async function GET(req: Request) {
   const { error } = await requireAuth(req);
@@ -9,14 +9,33 @@ export async function GET(req: Request) {
 
   const url = new URL(req.url);
   const query = url.searchParams.get('q')?.trim() ?? '';
-  if (!query) return jsonResponse({ posts: [], users: [] });
+  if (!query) return jsonResponse({ posts: [], users: [], hashtags: [] });
 
   const pattern = `%${query}%`;
   const userRows = await db
-    .select()
+    .select({
+      id: users.id,
+      name: users.name,
+      username: users.username,
+      email: users.email,
+      avatarUrl: users.avatarUrl,
+      isVerified: users.isVerified,
+      followersCount: users.followersCount,
+      followingCount: users.followingCount,
+      postsCount: users.postsCount,
+      isPrivate: users.isPrivate,
+      emailVerified: users.emailVerified,
+      createdAt: users.createdAt,
+    })
     .from(users)
     .where(or(ilike(users.name, pattern), ilike(users.username, pattern)))
     .limit(20);
+
+  const hashtagRows = await db
+    .select()
+    .from(hashtags)
+    .where(ilike(hashtags.name, pattern))
+    .limit(10);
 
   const postRows = await db
     .select({
@@ -44,9 +63,12 @@ export async function GET(req: Request) {
 
   return jsonResponse({
     users: userRows.map((user) => ({ ...user, isFollowing: false, posts: [] })),
+    hashtags: hashtagRows,
     posts: postRows.map((post) => ({
       ...post,
       media: mediaRows.filter((media) => media.postId === post.id),
+      isLiked: false,
+      isSaved: false,
     })),
   });
 }
