@@ -13,7 +13,10 @@ import {
   View,
 } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { StoryActions } from '@/components/stories/StoryActions';
+import { StoryViewersList } from '@/components/stories/StoryViewersList';
 import { COLORS, FONT_SIZE, FONT_WEIGHT, SPACING } from '@/lib/constants';
+import { useAuthStore } from '@/store/authStore';
 import { useStoryStore } from '@/store/storyStore';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -29,6 +32,7 @@ export default function StoryViewerScreen() {
     viewStory,
   } = useStoryStore();
   const router = useRouter();
+  const { user } = useAuthStore();
   const progress = useSharedValue(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isPaused, setIsPaused] = useState(false);
@@ -160,6 +164,16 @@ export default function StoryViewerScreen() {
         activeOpacity={1}
       />
 
+      <View style={styles.storyActionsWrapper}>
+        <StoryActions story={story} />
+      </View>
+
+      {story.userId === user?.id && (
+        <View style={styles.storyViewersWrapper}>
+          <StoryViewersList storyId={story.id} viewsCount={story.viewsCount} />
+        </View>
+      )}
+
       <View style={styles.replyRow}>
         <TouchableOpacity style={styles.replyInput}>
           <Text style={styles.replyPlaceholder}>Reply to {group.user.username}…</Text>
@@ -236,6 +250,8 @@ const styles = StyleSheet.create({
   },
   leftTouch: { position: 'absolute', left: 0, top: 80, bottom: 100, width: '35%', zIndex: 2 },
   rightTouch: { position: 'absolute', right: 0, top: 80, bottom: 100, width: '35%', zIndex: 2 },
+  storyActionsWrapper: { position: 'absolute', bottom: 100, right: SPACING.lg, zIndex: 4 },
+  storyViewersWrapper: { position: 'absolute', bottom: 110, left: SPACING.lg, zIndex: 4 },
   replyRow: {
     position: 'absolute',
     bottom: 40,

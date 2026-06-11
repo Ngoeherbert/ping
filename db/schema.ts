@@ -10,6 +10,7 @@ import {
   uniqueIndex,
   uuid,
   varchar,
+  type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 
 // ─── Enums ──────────────────────────────────────────────────────────────────
@@ -185,6 +186,8 @@ export const stories = pgTable('stories', {
   text: text('text'),
   textColor: varchar('text_color', { length: 7 }),
   backgroundColor: varchar('background_color', { length: 7 }),
+  resharedFromId: uuid('reshared_from_id').references((): AnyPgColumn => stories.id),
+  resharedFromUsername: varchar('reshared_from_username', { length: 50 }),
   viewsCount: integer('views_count').default(0),
   expiresAt: timestamp('expires_at').notNull(),
   createdAt: timestamp('created_at').defaultNow(),
@@ -318,6 +321,72 @@ export const messages = pgTable(
   }),
 );
 
+// ─── Privacy Settings ─────────────────────────────────────────────────────────
+
+export const privacySettings = pgTable('privacy_settings', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' })
+    .unique(),
+  readReceiptsEnabled: boolean('read_receipts_enabled').default(true),
+  statusVisibility: text('status_visibility').default('everyone'),
+  showOnlineStatus: boolean('show_online_status').default(true),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+export const readReceiptExceptions = pgTable(
+  'read_receipt_exceptions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    ownerId: uuid('owner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    targetUserId: uuid('target_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    hideFromTarget: boolean('hide_from_target').default(true),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  (t) => ({
+    uniqueException: uniqueIndex('unique_receipt_exception').on(t.ownerId, t.targetUserId),
+  }),
+);
+
+export const statusBlockList = pgTable(
+  'status_block_list',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    ownerId: uuid('owner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    blockedUserId: uuid('blocked_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  (t) => ({
+    uniqueBlock: uniqueIndex('unique_status_block').on(t.ownerId, t.blockedUserId),
+  }),
+);
+
+export const stealthMessageViews = pgTable(
+  'stealth_message_views',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    messageId: uuid('message_id')
+      .notNull()
+      .references(() => messages.id, { onDelete: 'cascade' }),
+    viewerId: uuid('viewer_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    viewedAt: timestamp('viewed_at').defaultNow(),
+  },
+  (t) => ({
+    uniqueStealthView: uniqueIndex('unique_stealth_msg_view').on(t.messageId, t.viewerId),
+  }),
+);
+
 // ─── Game Sessions ────────────────────────────────────────────────────────────
 
 export const gameSessions = pgTable(
@@ -440,6 +509,10 @@ export const usersRelations = relations(users, ({ many }) => ({
   following: many(follows, { relationName: 'follower' }),
   notifications: many(notifications),
   pushTokens: many(pushTokens),
+  privacySettings: many(privacySettings),
+  readReceiptExceptions: many(readReceiptExceptions, { relationName: 'receiptOwner' }),
+  statusBlocks: many(statusBlockList, { relationName: 'statusBlockOwner' }),
+  stealthMessageViews: many(stealthMessageViews),
   challengedGames: many(gameSessions, { relationName: 'challenger' }),
   opponentGames: many(gameSessions, { relationName: 'opponent' }),
   sentMessages: many(messages),
@@ -476,6 +549,44 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   sender: one(users, { fields: [messages.senderId], references: [users.id] }),
 }));
 
+
+export const privacySettingsRelations = relations(privacySettings, ({ one }) => ({
+  user: one(users, { fields: [privacySettings.userId], references: [users.id] }),
+}));
+
+export const readReceiptExceptionsRelations = relations(readReceiptExceptions, ({ one }) => ({
+  owner: one(users, {
+    fields: [readReceiptExceptions.ownerId],
+    references: [users.id],
+    relationName: 'receiptOwner',
+  }),
+  target: one(users, {
+    fields: [readReceiptExceptions.targetUserId],
+    references: [users.id],
+    relationName: 'receiptTarget',
+  }),
+}));
+
+export const statusBlockListRelations = relations(statusBlockList, ({ one }) => ({
+  owner: one(users, {
+    fields: [statusBlockList.ownerId],
+    references: [users.id],
+    relationName: 'statusBlockOwner',
+  }),
+  blockedUser: one(users, {
+    fields: [statusBlockList.blockedUserId],
+    references: [users.id],
+    relationName: 'statusBlockedUser',
+  }),
+}));
+
+export const stealthMessageViewsRelations = relations(stealthMessageViews, ({ one }) => ({
+  message: one(messages, {
+    fields: [stealthMessageViews.messageId],
+    references: [messages.id],
+  }),
+  viewer: one(users, { fields: [stealthMessageViews.viewerId], references: [users.id] }),
+}));
 
 export const gameSessionsRelations = relations(gameSessions, ({ one }) => ({
   conversation: one(conversations, {

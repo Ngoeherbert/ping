@@ -9,6 +9,7 @@ import {
   LogOut,
   Shield,
   Trash2,
+  UserX,
 } from 'lucide-react-native';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
@@ -85,6 +86,12 @@ export default function SettingsScreen() {
           toggle: true,
           toggleValue: privateAccount,
           onToggle: setPrivateAccount,
+        },
+        {
+          icon: <UserX color={COLORS.primary} size={20} />,
+          label: 'Privacy Controls',
+          sublabel: 'Read receipts, status visibility, and stealth tracking',
+          onPress: () => router.push('/privacy-settings'),
         },
         {
           icon: <Shield color={COLORS.primary} size={20} />,

@@ -29,6 +29,7 @@ export default function RootLayout() {
           <Stack.Screen name="followers/[id]" />
           <Stack.Screen name="settings" />
           <Stack.Screen name="qr-profile" />
+          <Stack.Screen name="privacy-settings" />
           <Stack.Screen name="games/[id]" options={{ presentation: 'modal' }} />
         </Stack>
       </AuthGuard>

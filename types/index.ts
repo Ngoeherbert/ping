@@ -108,6 +108,8 @@ export interface Story {
   text?: string | null;
   textColor?: string | null;
   backgroundColor?: string | null;
+  resharedFromId?: string | null;
+  resharedFromUsername?: string | null;
   viewsCount: number;
   expiresAt: ISODateString | Date;
   createdAt: ISODateString | Date;
@@ -175,6 +177,42 @@ export interface Notification {
   actor?: Pick<User, 'id' | 'name' | 'username' | 'avatarUrl'>;
 }
 
+
+// ─── Privacy ─────────────────────────────────────────────────────────────────
+
+export type StatusVisibility = 'everyone' | 'followers' | 'none';
+
+export interface PrivacySettings {
+  id?: string;
+  userId?: string;
+  readReceiptsEnabled: boolean;
+  statusVisibility: StatusVisibility;
+  showOnlineStatus: boolean;
+  updatedAt?: ISODateString | Date | null;
+}
+
+export interface ReadReceiptException {
+  id: string;
+  ownerId?: string;
+  targetUserId: string;
+  hideFromTarget: boolean;
+  createdAt?: ISODateString | Date | null;
+}
+
+export interface StatusBlock {
+  id: string;
+  ownerId?: string;
+  blockedUserId: string;
+  createdAt?: ISODateString | Date | null;
+}
+
+export interface StealthMessageViewer {
+  viewerId: string;
+  viewedAt: ISODateString | Date;
+  name: string;
+  username: string;
+  avatarUrl?: string | null;
+}
 
 // ─── Games ───────────────────────────────────────────────────────────────────
 
