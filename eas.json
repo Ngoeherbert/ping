@@ -1,0 +1,21 @@
+{
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "env": {
+        "BETTER_AUTH_URL": "https://your-production-domain.com",
+        "EXPO_PUBLIC_API_URL": "https://your-production-domain.com",
+        "EXPO_PUBLIC_PROFILE_BASE_URL": "https://ping.app/u"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
