@@ -130,7 +130,14 @@ export default function UserProfileScreen() {
 
         <View style={styles.stats}>
           {stats.map((stat) => (
-            <TouchableOpacity key={stat.label} style={styles.statItem}>
+            <TouchableOpacity
+              key={stat.label}
+              style={styles.statItem}
+              onPress={() => {
+                if (!id || stat.label === 'Posts') return;
+                router.push(`/followers/${id}?tab=${stat.label === 'Followers' ? 'followers' : 'following'}`);
+              }}
+            >
               <Text style={styles.statValue}>{formatCount(stat.value)}</Text>
               <Text style={styles.statLabel}>{stat.label}</Text>
             </TouchableOpacity>

@@ -23,6 +23,9 @@ export default function RootLayout() {
           <Stack.Screen name="user/[id]" />
           <Stack.Screen name="messages/[id]" />
           <Stack.Screen name="notifications" />
+          <Stack.Screen name="edit-profile" />
+          <Stack.Screen name="followers/[id]" />
+          <Stack.Screen name="settings" />
         </Stack>
       </AuthGuard>
     </GestureHandlerRootView>

@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Bookmark, Film, Grid3x3 } from 'lucide-react-native';
+import { Bookmark, Film, Grid3x3, Settings } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Dimensions,
@@ -73,9 +73,14 @@ export default function ProfileScreen() {
           ) : (
             <View style={styles.avatar} />
           )}
-          <TouchableOpacity style={styles.editButton} onPress={() => router.push('/edit-profile')}>
-            <Text style={styles.editText}>Edit Profile</Text>
-          </TouchableOpacity>
+          <View style={styles.profileActions}>
+            <TouchableOpacity style={styles.editButton} onPress={() => router.push('/edit-profile')}>
+              <Text style={styles.editText}>Edit Profile</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.settingsButton} onPress={() => router.push('/settings')}>
+              <Settings color={COLORS.text} size={18} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.info}>
@@ -90,7 +95,14 @@ export default function ProfileScreen() {
 
         <View style={styles.stats}>
           {stats.map((stat) => (
-            <TouchableOpacity key={stat.label} style={styles.statItem}>
+            <TouchableOpacity
+              key={stat.label}
+              style={styles.statItem}
+              onPress={() => {
+                if (!user?.id || stat.label === 'Posts') return;
+                router.push(`/followers/${user.id}?tab=${stat.label === 'Followers' ? 'followers' : 'following'}`);
+              }}
+            >
               <Text style={styles.statValue}>{formatCount(stat.value ?? 0)}</Text>
               <Text style={styles.statLabel}>{stat.label}</Text>
             </TouchableOpacity>
@@ -155,6 +167,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.background,
     backgroundColor: '#EEEEEE',
   },
+  profileActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   editButton: {
     borderWidth: 1.5,
     borderColor: COLORS.border,
@@ -163,6 +176,15 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   editText: { fontWeight: '700', color: COLORS.text, fontSize: 13 },
+  settingsButton: {
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   info: { paddingHorizontal: 16, marginBottom: 16 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   name: { fontSize: 20, fontWeight: '800', color: COLORS.text },

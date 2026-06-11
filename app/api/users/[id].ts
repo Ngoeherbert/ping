@@ -11,6 +11,7 @@ type UserUpdate = Partial<{
   location: string;
   avatarUrl: string;
   coverUrl: string;
+  isPrivate: boolean;
 }>;
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
@@ -42,6 +43,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     'location',
     'avatarUrl',
     'coverUrl',
+    'isPrivate',
   ];
   const updates: UserUpdate = {};
   for (const key of allowed) {
