@@ -10,10 +10,10 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@better-auth/expo": "latest",
     "@hookform/resolvers": "latest",
     "@neondatabase/serverless": "latest",
     "@react-native-async-storage/async-storage": "^1.23.1",
