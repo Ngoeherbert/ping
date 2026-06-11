@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, Image as ImageIcon, Send } from 'lucide-react-native';
-import { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, Gamepad2, Image as ImageIcon, Send } from 'lucide-react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { GameLauncher } from '@/components/games/GameLauncher';
 import { COLORS } from '@/lib/constants';
 import { useAuthStore } from '@/store/authStore';
 import { useMessagingStore } from '@/store/messagingStore';
@@ -19,9 +20,17 @@ import type { Message } from '@/types';
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { messages, fetchMessages, sendMessage, markRead } = useMessagingStore();
+  const {
+    conversations,
+    messages,
+    fetchConversations,
+    fetchMessages,
+    sendMessage,
+    markRead,
+  } = useMessagingStore();
   const { user } = useAuthStore();
   const [text, setText] = useState('');
+  const [showGameLauncher, setShowGameLauncher] = useState(false);
   const flatListRef = useRef<FlatList<Message>>(null);
   const router = useRouter();
 
@@ -30,9 +39,15 @@ export default function ChatScreen() {
 
     fetchMessages(id);
     markRead(id);
-  }, [fetchMessages, id, markRead]);
+    fetchConversations();
+  }, [fetchConversations, fetchMessages, id, markRead]);
 
   const conversationMessages = id ? messages[id] ?? [] : [];
+  const conversation = useMemo(
+    () => conversations.find((item) => item.id === id),
+    [conversations, id],
+  );
+  const opponentId = conversation?.members?.find((member) => member.id !== user?.id)?.id;
 
   const handleSend = async () => {
     if (!text.trim() || !id) return;
@@ -84,6 +99,9 @@ export default function ChatScreen() {
           <TouchableOpacity style={styles.mediaButton}>
             <ImageIcon color={COLORS.muted} size={22} />
           </TouchableOpacity>
+          <TouchableOpacity style={styles.mediaButton} onPress={() => setShowGameLauncher(true)}>
+            <Gamepad2 color={COLORS.muted} size={22} />
+          </TouchableOpacity>
           <TextInput
             style={styles.input}
             placeholder="Message..."
@@ -101,6 +119,12 @@ export default function ChatScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+      <GameLauncher
+        conversationId={id ?? ''}
+        opponentId={opponentId}
+        visible={showGameLauncher}
+        onClose={() => setShowGameLauncher(false)}
+      />
     </SafeAreaView>
   );
 }

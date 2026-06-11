@@ -175,6 +175,28 @@ export interface Notification {
   actor?: Pick<User, 'id' | 'name' | 'username' | 'avatarUrl'>;
 }
 
+
+// ─── Games ───────────────────────────────────────────────────────────────────
+
+export type GameType = 'archery' | 'pool' | 'ludo' | 'snake_ladder';
+export type GameStatus = 'pending' | 'active' | 'finished';
+
+export interface GameSession {
+  id: string;
+  conversationId: string;
+  challengerId: string;
+  opponentId: string;
+  type: GameType;
+  status: GameStatus | null;
+  state?: string | null;
+  challengerScore: number | null;
+  opponentScore: number | null;
+  currentTurnId?: string | null;
+  winnerId?: string | null;
+  createdAt?: ISODateString | Date | null;
+  updatedAt?: ISODateString | Date | null;
+}
+
 // ─── API ─────────────────────────────────────────────────────────────────────
 
 export interface PaginatedResponse<T> {

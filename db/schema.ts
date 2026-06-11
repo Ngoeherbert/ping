@@ -44,6 +44,19 @@ export const messageStatusEnum = pgEnum('message_status', [
   'read',
 ]);
 
+export const gameTypeEnum = pgEnum('game_type', [
+  'archery',
+  'pool',
+  'ludo',
+  'snake_ladder',
+]);
+
+export const gameStatusEnum = pgEnum('game_status', [
+  'pending',
+  'active',
+  'finished',
+]);
+
 // ─── Users ───────────────────────────────────────────────────────────────────
 
 export const users = pgTable(
@@ -305,6 +318,38 @@ export const messages = pgTable(
   }),
 );
 
+// ─── Game Sessions ────────────────────────────────────────────────────────────
+
+export const gameSessions = pgTable(
+  'game_sessions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    conversationId: uuid('conversation_id')
+      .notNull()
+      .references(() => conversations.id, { onDelete: 'cascade' }),
+    challengerId: uuid('challenger_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    opponentId: uuid('opponent_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    type: gameTypeEnum('type').notNull(),
+    status: gameStatusEnum('status').default('pending'),
+    state: text('state'),
+    challengerScore: integer('challenger_score').default(0),
+    opponentScore: integer('opponent_score').default(0),
+    currentTurnId: uuid('current_turn_id'),
+    winnerId: uuid('winner_id').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+  },
+  (t) => ({
+    conversationIdx: index('game_session_conversation_idx').on(t.conversationId),
+    challengerIdx: index('game_session_challenger_idx').on(t.challengerId),
+    opponentIdx: index('game_session_opponent_idx').on(t.opponentId),
+  }),
+);
+
 // ─── Notifications ────────────────────────────────────────────────────────────
 
 export const notifications = pgTable(
@@ -395,6 +440,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   following: many(follows, { relationName: 'follower' }),
   notifications: many(notifications),
   pushTokens: many(pushTokens),
+  challengedGames: many(gameSessions, { relationName: 'challenger' }),
+  opponentGames: many(gameSessions, { relationName: 'opponent' }),
   sentMessages: many(messages),
   savedPosts: many(savedPosts),
 }));
@@ -427,4 +474,26 @@ export const messagesRelations = relations(messages, ({ one }) => ({
     references: [conversations.id],
   }),
   sender: one(users, { fields: [messages.senderId], references: [users.id] }),
+}));
+
+
+export const gameSessionsRelations = relations(gameSessions, ({ one }) => ({
+  conversation: one(conversations, {
+    fields: [gameSessions.conversationId],
+    references: [conversations.id],
+  }),
+  challenger: one(users, {
+    fields: [gameSessions.challengerId],
+    references: [users.id],
+    relationName: 'challenger',
+  }),
+  opponent: one(users, {
+    fields: [gameSessions.opponentId],
+    references: [users.id],
+    relationName: 'opponent',
+  }),
+  winner: one(users, {
+    fields: [gameSessions.winnerId],
+    references: [users.id],
+  }),
 }));
