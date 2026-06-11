@@ -5,7 +5,7 @@ export type TimestampFields = {
   updatedAt: Date;
 };
 
-export type ISODateString = string;
+export type ISODateString = string | Date;
 export type MediaType = 'image' | 'video' | 'audio';
 export type PostType = 'image' | 'video' | 'reel' | 'story' | 'text';
 export type MessageStatus = 'sent' | 'delivered' | 'read';
@@ -23,17 +23,17 @@ export type User = {
   name: string;
   username: string;
   email: string;
-  emailVerified?: boolean;
+  emailVerified?: boolean | null;
   avatarUrl?: string | null;
   coverUrl?: string | null;
   bio?: string | null;
   website?: string | null;
   location?: string | null;
-  isVerified?: boolean;
-  isPrivate?: boolean;
-  followersCount?: number;
-  followingCount?: number;
-  postsCount?: number;
+  isVerified?: boolean | null;
+  isPrivate?: boolean | null;
+  followersCount?: number | null;
+  followingCount?: number | null;
+  postsCount?: number | null;
 };
 
 export type PostMedia = {
