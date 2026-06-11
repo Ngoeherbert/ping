@@ -1,7 +1,7 @@
 import { db } from '@/db';
-import { conversationMembers, conversations } from '@/db/schema';
+import { conversationMembers, conversations, messages, users } from '@/db/schema';
 import { jsonResponse, requireAuth } from '@/lib/apiMiddleware';
-import { desc, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, ne } from 'drizzle-orm';
 
 export async function GET(req: Request) {
   const { error, userId } = await requireAuth(req);
@@ -23,7 +23,43 @@ export async function GET(req: Request) {
     .where(inArray(conversations.id, conversationIds))
     .orderBy(desc(conversations.lastMessageAt));
 
-  return jsonResponse({ conversations: rows, unreadCount: 0 });
+  const enriched = await Promise.all(
+    rows.map(async (conversation) => {
+      const members = await db
+        .select({
+          id: users.id,
+          name: users.name,
+          username: users.username,
+          email: users.email,
+          avatarUrl: users.avatarUrl,
+          isVerified: users.isVerified,
+        })
+        .from(conversationMembers)
+        .innerJoin(users, eq(conversationMembers.userId, users.id))
+        .where(
+          and(
+            eq(conversationMembers.conversationId, conversation.id),
+            ne(conversationMembers.userId, userId!),
+          ),
+        );
+
+      const [lastMessage] = await db
+        .select()
+        .from(messages)
+        .where(eq(messages.conversationId, conversation.id))
+        .orderBy(desc(messages.createdAt))
+        .limit(1);
+
+      return {
+        ...conversation,
+        members,
+        lastMessage: lastMessage ?? null,
+        unreadCount: 0,
+      };
+    }),
+  );
+
+  return jsonResponse({ conversations: enriched, unreadCount: 0 });
 }
 
 export async function POST(req: Request) {

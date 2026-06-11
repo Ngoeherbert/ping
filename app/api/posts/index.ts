@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { hashtags, postHashtags, postMedia, posts } from '@/db/schema';
+import { hashtags, postHashtags, postMedia, posts, users } from '@/db/schema';
 import { jsonResponse, requireAuth } from '@/lib/apiMiddleware';
 import { eq } from 'drizzle-orm';
 import type { MediaType, PostType } from '@/types';
@@ -33,20 +33,23 @@ export async function POST(req: Request) {
     .values({ userId: userId!, caption, location, type: type ?? 'image' })
     .returning();
 
-  if (media?.length) {
-    await db.insert(postMedia).values(
-      media.map((item, index) => ({
-        postId: post.id,
-        url: item.url,
-        type: item.type,
-        thumbnailUrl: item.thumbnailUrl,
-        width: item.width,
-        height: item.height,
-        duration: item.duration,
-        order: index,
-      })),
-    );
-  }
+  const createdMedia = media?.length
+    ? await db
+        .insert(postMedia)
+        .values(
+          media.map((item, index) => ({
+            postId: post.id,
+            url: item.url,
+            type: item.type,
+            thumbnailUrl: item.thumbnailUrl,
+            width: item.width,
+            height: item.height,
+            duration: item.duration,
+            order: index,
+          })),
+        )
+        .returning()
+    : [];
 
   if (hashtagNames?.length) {
     for (const rawName of hashtagNames) {
@@ -59,5 +62,17 @@ export async function POST(req: Request) {
     }
   }
 
-  return jsonResponse({ post }, 201);
+  const [user] = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      username: users.username,
+      email: users.email,
+      avatarUrl: users.avatarUrl,
+      isVerified: users.isVerified,
+    })
+    .from(users)
+    .where(eq(users.id, userId!));
+
+  return jsonResponse({ post: { ...post, media: createdMedia, user } }, 201);
 }
