@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
-import { ResizeMode, Video } from 'expo-av';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Bookmark, Heart, MessageCircle, Send, Volume2, VolumeX } from 'lucide-react-native';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '@/lib/constants';
 import { useReelStore } from '@/store/reelStore';
@@ -16,33 +16,34 @@ interface ReelItemProps {
 }
 
 export function ReelItem({ reel, isActive }: ReelItemProps) {
-  const videoRef = useRef<Video>(null);
   const { isMuted, toggleMute, likeReel } = useReelStore();
   const router = useRouter();
   const mediaUrl = reel.media?.[0]?.url;
   const user = reel.user;
+  const player = useVideoPlayer(mediaUrl ?? null, (videoPlayer) => {
+    videoPlayer.loop = true;
+  });
 
   useEffect(() => {
-    if (!videoRef.current) return;
+    player.muted = isMuted;
+  }, [isMuted, player]);
 
-    if (isActive) {
-      videoRef.current.playAsync();
+  useEffect(() => {
+    if (isActive && mediaUrl) {
+      player.play();
     } else {
-      videoRef.current.pauseAsync();
+      player.pause();
     }
-  }, [isActive]);
+  }, [isActive, mediaUrl, player]);
 
   return (
     <View style={styles.container}>
       {mediaUrl ? (
-        <Video
-          ref={videoRef}
-          source={{ uri: mediaUrl }}
+        <VideoView
+          player={player}
           style={styles.video}
-          resizeMode={ResizeMode.COVER}
-          isLooping
-          isMuted={isMuted}
-          shouldPlay={isActive}
+          contentFit="cover"
+          nativeControls={false}
         />
       ) : null}
 

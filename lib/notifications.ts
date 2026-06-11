@@ -1,17 +1,51 @@
-import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { API_URL, COLORS } from './constants';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+import type { Notification, NotificationResponse } from 'expo-notifications';
+
+type NotificationsModule = typeof import('expo-notifications');
+type DeviceModule = typeof import('expo-device');
+
+let notificationHandlerConfigured = false;
+
+function isExpoGo() {
+  return Constants.appOwnership === 'expo';
+}
+
+async function loadNotificationModules(): Promise<{
+  Notifications: NotificationsModule;
+  Device: DeviceModule;
+} | null> {
+  if (isExpoGo()) {
+    return null;
+  }
+
+  const [Notifications, Device] = await Promise.all([
+    import('expo-notifications'),
+    import('expo-device'),
+  ]);
+
+  if (!notificationHandlerConfigured) {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+      }),
+    });
+    notificationHandlerConfigured = true;
+  }
+
+  return { Notifications, Device };
+}
 
 export async function registerForPushNotifications(): Promise<string | null> {
+  const modules = await loadNotificationModules();
+  if (!modules) return null;
+
+  const { Notifications, Device } = modules;
   if (!Device.isDevice) return null;
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -45,14 +79,30 @@ export async function registerForPushNotifications(): Promise<string | null> {
 }
 
 export function useNotificationListeners(
-  onNotification: (notification: Notifications.Notification) => void,
-  onResponse: (response: Notifications.NotificationResponse) => void,
+  onNotification: (notification: Notification) => void,
+  onResponse: (response: NotificationResponse) => void,
 ) {
-  const notificationListener = Notifications.addNotificationReceivedListener(onNotification);
-  const responseListener = Notifications.addNotificationResponseReceivedListener(onResponse);
+  let disposed = false;
+  let cleanup: (() => void) | undefined;
+
+  if (isExpoGo()) {
+    return () => undefined;
+  }
+
+  import('expo-notifications').then((Notifications) => {
+    if (disposed) return;
+
+    const notificationListener = Notifications.addNotificationReceivedListener(onNotification);
+    const responseListener = Notifications.addNotificationResponseReceivedListener(onResponse);
+
+    cleanup = () => {
+      Notifications.removeNotificationSubscription(notificationListener);
+      Notifications.removeNotificationSubscription(responseListener);
+    };
+  });
 
   return () => {
-    Notifications.removeNotificationSubscription(notificationListener);
-    Notifications.removeNotificationSubscription(responseListener);
+    disposed = true;
+    cleanup?.();
   };
 }
