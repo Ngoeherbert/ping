@@ -47,7 +47,6 @@
       "expo-notifications"
     ],
     "extra": {
-      "apiUrl": "http://localhost:8081",
       "eas": {
         "projectId": "your-eas-project-id"
       }
