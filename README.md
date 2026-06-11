@@ -8,7 +8,7 @@ Ping is an Expo Router social app scaffold with a React Native client, API route
 - **State:** Zustand stores under `store/`
 - **Database:** Postgres via Drizzle ORM and Neon serverless
 - **Auth:** Better Auth with email/password and Google OAuth plumbing
-- **Media:** Cloudinary unsigned uploads, Expo Media Library/File System for story downloads
+- **Media:** Cloudinary unsigned uploads, `expo-video` reels playback, and Expo Media Library/File System for story downloads
 - **Notifications:** Expo Notifications with server-side push token registration
 - **Assets:** Text-based generator for local Expo image assets and Inter fonts installed through `@expo-google-fonts/inter`
 
@@ -111,5 +111,11 @@ DEPLOYMENT.md         Deployment setup guide
 
 - API routes use `requireAuth` from `lib/apiMiddleware.ts`; test authenticated flows with a valid session.
 - Story download requires a device or simulator with media-library permissions.
-- Push notifications require a physical device for token registration.
+- Push notifications require a physical device and a development build; the app skips push registration in Expo Go to avoid SDK 54 Expo Go notification limitations.
 - Mini game sessions are synchronized by polling the `game_sessions` table through `/api/games/[id]`.
+
+## SDK 54 Runtime Notes
+
+- Server endpoints under `app/api` use Expo Router `+api` files so they are not treated as client screens by the native router.
+- Reels use `expo-video` instead of deprecated `expo-av`.
+- If you see a Worklets version mismatch after upgrading, clear Metro with `npm run start -- --reset-cache` or `npx expo start -c` after reinstalling dependencies.
