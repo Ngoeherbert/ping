@@ -1,14 +1,17 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { COLORS, FONT_SIZE, FONT_WEIGHT, SPACING } from '@/lib/constants';
+import { COLORS, FONT_SIZE, FONT_WEIGHT } from '@/lib/constants';
 
-type ScreenPlaceholderProps = {
+interface EmptyStateProps {
   title: string;
   subtitle?: string;
-};
+  icon?: ReactNode;
+}
 
-export function ScreenPlaceholder({ title, subtitle }: ScreenPlaceholderProps) {
+export function EmptyState({ title, subtitle, icon }: EmptyStateProps) {
   return (
     <View style={styles.container}>
+      {icon ? <View style={styles.iconWrapper}>{icon}</View> : null}
       <Text style={styles.title}>{title}</Text>
       {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
     </View>
@@ -18,21 +21,22 @@ export function ScreenPlaceholder({ title, subtitle }: ScreenPlaceholderProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
-    padding: SPACING.xl,
-    backgroundColor: COLORS.background,
+    alignItems: 'center',
+    padding: 32,
   },
+  iconWrapper: { marginBottom: 16, opacity: 0.4 },
   title: {
-    color: COLORS.text,
-    fontSize: FONT_SIZE.xxl,
+    fontSize: FONT_SIZE.lg,
     fontWeight: FONT_WEIGHT.bold,
+    color: COLORS.text,
     textAlign: 'center',
   },
   subtitle: {
-    marginTop: SPACING.sm,
+    fontSize: FONT_SIZE.sm,
     color: COLORS.textSecondary,
-    fontSize: FONT_SIZE.md,
     textAlign: 'center',
+    marginTop: 8,
+    lineHeight: 20,
   },
 });
