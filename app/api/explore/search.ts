@@ -1,18 +1,24 @@
 import { db } from '@/db';
 import { postMedia, posts, users } from '@/db/schema';
 import { jsonResponse, requireAuth } from '@/lib/apiMiddleware';
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { desc, eq, ilike, inArray, or } from 'drizzle-orm';
 
 export async function GET(req: Request) {
   const { error } = await requireAuth(req);
   if (error) return error;
 
   const url = new URL(req.url);
-  const page = Number(url.searchParams.get('page') ?? 1);
-  const limit = Number(url.searchParams.get('limit') ?? 10);
-  const offset = (page - 1) * limit;
+  const query = url.searchParams.get('q')?.trim() ?? '';
+  if (!query) return jsonResponse({ posts: [], users: [] });
 
-  const rows = await db
+  const pattern = `%${query}%`;
+  const userRows = await db
+    .select()
+    .from(users)
+    .where(or(ilike(users.name, pattern), ilike(users.username, pattern)))
+    .limit(20);
+
+  const postRows = await db
     .select({
       id: posts.id,
       userId: posts.userId,
@@ -25,33 +31,22 @@ export async function GET(req: Request) {
       viewsCount: posts.viewsCount,
       createdAt: posts.createdAt,
       updatedAt: posts.updatedAt,
-      user: {
-        id: users.id,
-        name: users.name,
-        username: users.username,
-        avatarUrl: users.avatarUrl,
-        isVerified: users.isVerified,
-      },
     })
     .from(posts)
-    .innerJoin(users, eq(posts.userId, users.id))
-    .where(and(eq(posts.type, 'reel'), eq(posts.isArchived, false)))
+    .where(or(ilike(posts.caption, pattern), ilike(posts.location, pattern)))
     .orderBy(desc(posts.createdAt))
-    .limit(limit + 1)
-    .offset(offset);
+    .limit(30);
 
-  const hasMore = rows.length > limit;
-  const reels = hasMore ? rows.slice(0, limit) : rows;
-  const postIds = reels.map((reel) => reel.id);
+  const postIds = postRows.map((post) => post.id);
   const mediaRows = postIds.length
     ? await db.select().from(postMedia).where(inArray(postMedia.postId, postIds))
     : [];
 
   return jsonResponse({
-    reels: reels.map((reel) => ({
-      ...reel,
-      media: mediaRows.filter((media) => media.postId === reel.id),
+    users: userRows.map((user) => ({ ...user, isFollowing: false, posts: [] })),
+    posts: postRows.map((post) => ({
+      ...post,
+      media: mediaRows.filter((media) => media.postId === post.id),
     })),
-    hasMore,
   });
 }
