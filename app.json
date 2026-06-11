@@ -14,6 +14,18 @@
       "expo-router",
       "expo-secure-store",
       [
+        "expo-font",
+        {
+          "fonts": [
+            "./node_modules/@expo-google-fonts/inter/Inter_400Regular.ttf",
+            "./node_modules/@expo-google-fonts/inter/Inter_500Medium.ttf",
+            "./node_modules/@expo-google-fonts/inter/Inter_600SemiBold.ttf",
+            "./node_modules/@expo-google-fonts/inter/Inter_700Bold.ttf",
+            "./node_modules/@expo-google-fonts/inter/Inter_800ExtraBold.ttf"
+          ]
+        }
+      ],
+      [
         "expo-camera",
         {
           "cameraPermission": "Ping needs camera access to create posts."
@@ -25,6 +37,13 @@
           "photosPermission": "Ping needs photo library access."
         }
       ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Ping needs photo library access to save stories.",
+          "savePhotosPermission": "Ping needs permission to save stories to your library."
+        }
+      ],
       "expo-notifications"
     ],
     "extra": {
@@ -32,6 +51,28 @@
       "eas": {
         "projectId": "your-eas-project-id"
       }
+    },
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "assetBundlePatterns": [
+      "assets/images/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
     }
   }
 }

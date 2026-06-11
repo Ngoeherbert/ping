@@ -8,3 +8,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .DS_Store
+# Locally generated Expo image assets (created by npm run assets:generate)
+/assets/*.png
+/assets/images/*.png

@@ -4,12 +4,13 @@ Ping is an Expo Router social app scaffold with a React Native client, API route
 
 ## Tech Stack
 
-- **Mobile app:** Expo SDK 52, React Native 0.76, Expo Router 4
+- **Mobile app:** Expo SDK 54, React 19.1, React Native 0.81.4, Expo Router 6
 - **State:** Zustand stores under `store/`
 - **Database:** Postgres via Drizzle ORM and Neon serverless
 - **Auth:** Better Auth with email/password and Google OAuth plumbing
 - **Media:** Cloudinary unsigned uploads, Expo Media Library/File System for story downloads
 - **Notifications:** Expo Notifications with server-side push token registration
+- **Assets:** Text-based generator for local Expo image assets and Inter fonts installed through `@expo-google-fonts/inter`
 
 ## Getting Started
 
@@ -19,7 +20,14 @@ Ping is an Expo Router social app scaffold with a React Native client, API route
 npm install
 ```
 
-This project pins `react-native-screens` to an Expo SDK 52 / React Native 0.76 compatible version. If you previously hit an `ERESOLVE` error mentioning `react-native-screens@4.25.x` requiring `react-native >=0.82.0`, pull the latest `package.json` and rerun `npm install`.
+The dependency set is upgraded for Expo SDK 54 and pins React Native peer packages to SDK-compatible ranges. In particular, `react-native` is set to `0.81.4` and `react-native-screens` is pinned to `~4.16.0`, avoiding the earlier install conflict where npm selected `react-native-screens@4.25.x` with a `react-native >=0.82.0` peer requirement.
+
+If your local machine still has a stale dependency graph, remove old install artifacts and reinstall:
+
+```bash
+rm -rf node_modules package-lock.json
+npm install
+```
 
 ### 2. Configure environment variables
 
@@ -59,6 +67,18 @@ npm run android
 npm run web
 ```
 
+## Assets and Fonts
+
+Binary files are intentionally not committed to keep the repository reviewable in environments that do not support binary diffs. Instead, `scripts/generate-assets.js` creates the Expo PNG assets locally.
+
+```bash
+npm run assets:generate
+```
+
+`npm install` also runs the generator through `postinstall`, so a fresh checkout will create the required `assets/icon.png`, `assets/adaptive-icon.png`, `assets/splash-icon.png`, `assets/favicon.png`, and bundled `assets/images/*` copies after dependencies install.
+
+Inter fonts are installed from `@expo-google-fonts/inter` and wired through the `expo-font` config plugin in `app.json`, which avoids committing font binaries to this repo.
+
 ## Useful Scripts
 
 | Command | Description |
@@ -68,6 +88,7 @@ npm run web
 | `npm run android` | Start Expo for Android |
 | `npm run web` | Start Expo for web |
 | `npm run typecheck` | Run TypeScript with `tsc --noEmit` |
+| `npm run assets:generate` | Generate local Expo PNG image assets |
 | `npm run db:generate` | Generate Drizzle migrations |
 | `npm run db:migrate` | Apply Drizzle migrations |
 | `npm run db:studio` | Open Drizzle Studio |
@@ -76,6 +97,7 @@ npm run web
 
 ```text
 app/                  Expo Router screens and API routes
+assets/               Generated asset placeholders and asset-generation notes
 components/           Reusable feed, story, game, and UI components
 db/                   Drizzle schema and database client
 lib/                  Auth, API middleware, constants, upload and notification utilities
