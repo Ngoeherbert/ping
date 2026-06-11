@@ -330,6 +330,25 @@ export const notifications = pgTable(
   }),
 );
 
+// ─── Push Tokens ─────────────────────────────────────────────────────────────
+
+export const pushTokens = pgTable(
+  'push_tokens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    token: text('token').notNull(),
+    createdAt: timestamp('created_at').defaultNow(),
+    updatedAt: timestamp('updated_at').defaultNow(),
+  },
+  (t) => ({
+    uniqueToken: uniqueIndex('unique_push_token').on(t.token),
+    userIdIdx: index('push_token_user_id_idx').on(t.userId),
+  }),
+);
+
 // ─── Saved Posts ──────────────────────────────────────────────────────────────
 
 export const savedPosts = pgTable(
@@ -375,6 +394,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   followers: many(follows, { relationName: 'following' }),
   following: many(follows, { relationName: 'follower' }),
   notifications: many(notifications),
+  pushTokens: many(pushTokens),
   sentMessages: many(messages),
   savedPosts: many(savedPosts),
 }));

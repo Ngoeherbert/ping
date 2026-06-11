@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Bookmark, Film, Grid3x3, Settings } from 'lucide-react-native';
+import { Bookmark, Film, Grid3x3, QrCode, Settings } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Dimensions,
@@ -77,7 +77,10 @@ export default function ProfileScreen() {
             <TouchableOpacity style={styles.editButton} onPress={() => router.push('/edit-profile')}>
               <Text style={styles.editText}>Edit Profile</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.settingsButton} onPress={() => router.push('/settings')}>
+            <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/qr-profile')}>
+              <QrCode color={COLORS.text} size={18} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/settings')}>
               <Settings color={COLORS.text} size={18} />
             </TouchableOpacity>
           </View>
@@ -176,7 +179,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   editText: { fontWeight: '700', color: COLORS.text, fontSize: 13 },
-  settingsButton: {
+  iconButton: {
     borderWidth: 1.5,
     borderColor: COLORS.border,
     borderRadius: 10,

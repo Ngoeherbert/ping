@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import { API_URL, COLORS } from '@/lib/constants';
+import { uploadMedia } from '@/lib/uploadMedia';
 import { useFeedStore } from '@/store/feedStore';
 import type { MediaType } from '@/types';
 
@@ -71,7 +72,8 @@ export default function CreateScreen() {
 
     setIsPosting(true);
     try {
-      const uploadedUrl = await uploadMedia(mediaUri);
+      const uploadType = postType === 'video' || postType === 'reel' ? 'video' : 'image';
+      const uploadedUrl = await uploadMedia(mediaUri, uploadType);
       const mediaType: MediaType = postType === 'video' || postType === 'reel' ? 'video' : 'image';
       const response = await fetch(`${API_URL}/api/posts`, {
         method: 'POST',
@@ -169,9 +171,6 @@ export default function CreateScreen() {
   );
 }
 
-async function uploadMedia(uri: string): Promise<string> {
-  return uri;
-}
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },

@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { AuthGuard } from '@/components/shared/AuthGuard';
+import { registerForPushNotifications } from '@/lib/notifications';
 import { useAuthStore } from '@/store/authStore';
 
 export default function RootLayout() {
@@ -10,6 +11,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     initialize();
+    registerForPushNotifications();
   }, [initialize]);
 
   return (
@@ -26,6 +28,7 @@ export default function RootLayout() {
           <Stack.Screen name="edit-profile" />
           <Stack.Screen name="followers/[id]" />
           <Stack.Screen name="settings" />
+          <Stack.Screen name="qr-profile" />
         </Stack>
       </AuthGuard>
     </GestureHandlerRootView>
