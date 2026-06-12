@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { API_URL } from '@/lib/constants';
+import { seedStoryGroups } from '@/lib/seedData';
 import type { StoryGroup } from '@/types';
 
 interface StoryState {
@@ -16,7 +17,7 @@ interface StoryState {
 }
 
 export const useStoryStore = create<StoryState>((set, get) => ({
-  storyGroups: [],
+  storyGroups: seedStoryGroups,
   activeGroupIndex: 0,
   activeStoryIndex: 0,
   isLoading: false,
@@ -25,15 +26,24 @@ export const useStoryStore = create<StoryState>((set, get) => ({
     set({ isLoading: true });
     try {
       const res = await fetch(`${API_URL}/api/stories`);
+      if (!res.ok) throw new Error('Stories request failed');
+
       const data = await res.json();
-      set({ storyGroups: data.groups });
+      const groups = Array.isArray(data.groups) && data.groups.length > 0
+        ? data.groups
+        : seedStoryGroups;
+      set({ storyGroups: groups });
+    } catch {
+      set({ storyGroups: seedStoryGroups });
     } finally {
       set({ isLoading: false });
     }
   },
 
   viewStory: async (storyId) => {
-    await fetch(`${API_URL}/api/stories/${storyId}/view`, { method: 'POST' });
+    await fetch(`${API_URL}/api/stories/${storyId}/view`, { method: 'POST' }).catch(
+      () => undefined,
+    );
   },
 
   setActiveGroup: (index) => set({ activeGroupIndex: index, activeStoryIndex: 0 }),

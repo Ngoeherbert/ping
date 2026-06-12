@@ -21,6 +21,20 @@ export const {
   signOut,
   useSession,
   getSession,
-  forgetPassword,
   resetPassword,
 } = authClient;
+
+type ForgetPasswordPayload = { email: string; redirectTo?: string };
+
+type PasswordResetClient = {
+  forgetPassword?: (payload: ForgetPasswordPayload) => Promise<unknown>;
+  requestPasswordReset?: (payload: ForgetPasswordPayload) => Promise<unknown>;
+};
+
+export const forgetPassword = (payload: ForgetPasswordPayload) => {
+  const client = authClient as PasswordResetClient;
+
+  return client.forgetPassword
+    ? client.forgetPassword(payload)
+    : client.requestPasswordReset?.(payload);
+};

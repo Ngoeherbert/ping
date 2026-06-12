@@ -1,15 +1,15 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   Alert,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { authClient } from '@/lib/authClient';
+import { forgetPassword } from '@/lib/authClient';
 import { COLORS } from '@/lib/constants';
 
 export default function ForgotPasswordScreen() {
@@ -23,7 +23,7 @@ export default function ForgotPasswordScreen() {
       return;
     }
 
-    await authClient.forgetPassword({ email, redirectTo: '/reset-password' });
+    await forgetPassword({ email, redirectTo: '/reset-password' });
     setSent(true);
   };
 

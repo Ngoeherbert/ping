@@ -1,10 +1,10 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Bookmark, Film, Grid3x3, QrCode, Settings } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Dimensions,
   Image,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,

@@ -1,7 +1,8 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Edit } from 'lucide-react-native';
 import { useEffect } from 'react';
-import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '@/lib/constants';
 import { useMessagingStore } from '@/store/messagingStore';
 import type { Conversation } from '@/types';
@@ -35,7 +36,9 @@ export default function MessagesScreen() {
 function ConversationRow({ conversation, onPress }: { conversation: Conversation; onPress: () => void }) {
   const displayName = conversation.groupName ?? conversation.members?.[0]?.name ?? 'Conversation';
   const avatarUrl = conversation.groupAvatarUrl ?? conversation.members?.[0]?.avatarUrl;
-  const lastMessage = conversation.lastMessage?.content ?? 'No messages yet';
+  const lastMessage = typeof conversation.lastMessage === 'string'
+    ? conversation.lastMessage
+    : conversation.lastMessage?.content ?? 'No messages yet';
   const lastMessageTime = conversation.lastMessageAt
     ? formatRelativeTime(conversation.lastMessageAt)
     : '';

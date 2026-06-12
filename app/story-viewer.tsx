@@ -1,3 +1,4 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Send, X } from 'lucide-react-native';
@@ -5,7 +6,6 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
   Image,
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,

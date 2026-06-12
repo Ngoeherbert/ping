@@ -1,3 +1,4 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Search, X } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
@@ -5,7 +6,6 @@ import {
   Dimensions,
   FlatList,
   Image,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,

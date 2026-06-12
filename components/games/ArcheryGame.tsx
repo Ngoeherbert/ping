@@ -1,3 +1,4 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
@@ -5,7 +6,6 @@ import {
   Animated,
   Dimensions,
   GestureResponderEvent,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,

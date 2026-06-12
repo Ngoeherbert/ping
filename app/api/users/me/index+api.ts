@@ -31,7 +31,10 @@ export async function PATCH(req: Request) {
   ];
   const updates: UserUpdate = {};
   for (const key of allowed) {
-    if (key in body) updates[key] = body[key];
+    const value = body[key];
+    if (value !== undefined) {
+      Object.assign(updates, { [key]: value });
+    }
   }
 
   const [updated] = await db

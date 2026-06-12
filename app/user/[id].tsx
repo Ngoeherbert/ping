@@ -1,3 +1,4 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Film, Grid3x3, MoreHorizontal } from 'lucide-react-native';
 import { useEffect, useMemo, useState } from 'react';
@@ -5,7 +6,6 @@ import {
   ActivityIndicator,
   Dimensions,
   Image,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,

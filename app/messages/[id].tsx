@@ -1,3 +1,4 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, Gamepad2, Image as ImageIcon, Send } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -5,7 +6,6 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,

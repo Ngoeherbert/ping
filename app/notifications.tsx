@@ -1,10 +1,11 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import { useEffect } from 'react';
-import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '@/lib/constants';
 import { useNotificationStore } from '@/store/notificationStore';
-import type { ISODateString, NotificationType } from '@/types';
+import type { NotificationType } from '@/types';
 
 const NOTIFICATION_LABELS: Record<NotificationType, string> = {
   like: 'liked your post.',
@@ -72,7 +73,7 @@ export default function NotificationsScreen() {
   );
 }
 
-function formatRelativeTime(dateValue: ISODateString) {
+function formatRelativeTime(dateValue: string | Date) {
   const diff = Date.now() - new Date(dateValue).getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return 'just now';
