@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { API_URL } from '@/lib/constants';
+import { seedStoryGroups } from '@/lib/seedData';
 import type { StoryGroup } from '@/types';
 
 interface StoryState {
@@ -16,7 +17,7 @@ interface StoryState {
 }
 
 export const useStoryStore = create<StoryState>((set, get) => ({
-  storyGroups: [],
+  storyGroups: seedStoryGroups,
   activeGroupIndex: 0,
   activeStoryIndex: 0,
   isLoading: false,

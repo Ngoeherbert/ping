@@ -1,3 +1,4 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ArrowLeft,
@@ -14,7 +15,6 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
@@ -151,11 +151,11 @@ export default function PostDetailScreen() {
             <>
               <TouchableOpacity
                 style={styles.postHeader}
-                onPress={() => router.push(`/user/${post.user.id}`)}
+                onPress={() => post.user && router.push(`/user/${post.user.id}`)}
               >
-                <Image source={{ uri: post.user.avatarUrl ?? undefined }} style={styles.avatar} />
+                <Image source={{ uri: post.user?.avatarUrl ?? undefined }} style={styles.avatar} />
                 <View style={styles.authorInfo}>
-                  <Text style={styles.username}>{post.user.username}</Text>
+                  <Text style={styles.username}>{post.user?.username ?? 'unknown'}</Text>
                   {post.location && <Text style={styles.location}>{post.location}</Text>}
                 </View>
                 <MoreHorizontal color={COLORS.textSecondary} size={18} />

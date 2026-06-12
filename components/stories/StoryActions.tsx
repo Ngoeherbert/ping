@@ -1,5 +1,5 @@
+import Constants from 'expo-constants';
 import * as FileSystem from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
 import { Download, RefreshCw } from 'lucide-react-native';
 import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { API_URL, COLORS } from '@/lib/constants';
@@ -10,15 +10,28 @@ interface Props {
   onReshared?: () => void;
 }
 
+function isExpoGo() {
+  return Constants.appOwnership === 'expo';
+}
+
 export function StoryActions({ story, onReshared }: Props) {
   const downloadStory = async () => {
-    const { status } = await MediaLibrary.requestPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Allow Ping to save media to your library.');
+    if (isExpoGo()) {
+      Alert.alert(
+        'Development build needed',
+        'Expo Go has limited media-library access. Create a development build to save stories to your library.',
+      );
       return;
     }
 
     try {
+      const MediaLibrary = await import('expo-media-library');
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Allow Ping to save media to your library.');
+        return;
+      }
+
       const cacheDirectory = FileSystem.cacheDirectory;
       if (!cacheDirectory) throw new Error('Cache directory unavailable');
 

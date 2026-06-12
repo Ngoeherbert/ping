@@ -1,18 +1,29 @@
 import { Tabs } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Film, Home, PlusSquare, Search, User } from 'lucide-react-native';
 import { COLORS } from '@/lib/constants';
 import { useNotificationStore } from '@/store/notificationStore';
 
+const TAB_BAR_HEIGHT = 60;
+
 export default function TabLayout() {
   const { unreadCount } = useNotificationStore();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+        sceneStyle: styles.scene,
         tabBarShowLabel: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            height: TAB_BAR_HEIGHT + insets.bottom,
+            paddingBottom: Math.max(insets.bottom, 8),
+          },
+        ],
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: COLORS.textSecondary,
       }}
@@ -57,12 +68,12 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
+  scene: { backgroundColor: COLORS.background },
   tabBar: {
     borderTopWidth: 0.5,
     borderTopColor: COLORS.border,
     backgroundColor: COLORS.background,
-    height: 60,
-    paddingBottom: 8,
+    paddingTop: 8,
   },
   createButton: {
     backgroundColor: COLORS.primary,

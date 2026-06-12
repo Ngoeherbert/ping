@@ -2,7 +2,7 @@ import { db } from '@/db';
 import { follows, privacySettings, statusBlockList, stories, users } from '@/db/schema';
 import { jsonResponse, requireAuth } from '@/lib/apiMiddleware';
 import { and, desc, eq, inArray } from 'drizzle-orm';
-import type { StoryGroup } from '@/types';
+import type { Story, StoryGroup } from '@/types';
 
 export async function GET(req: Request) {
   const { error, userId } = await requireAuth(req);
@@ -67,7 +67,12 @@ export async function GET(req: Request) {
     if (!groups[story.userId]) {
       groups[story.userId] = { user: story.user, stories: [] };
     }
-    groups[story.userId].stories.push(story);
+    groups[story.userId].stories.push({
+      ...story,
+      viewsCount: story.viewsCount ?? 0,
+      createdAt: story.createdAt ?? new Date(),
+      expiresAt: story.expiresAt ?? new Date(Date.now() + 24 * 60 * 60 * 1000),
+    } as Story);
   }
 
   return jsonResponse({ groups: Object.values(groups) });
@@ -78,12 +83,21 @@ export async function POST(req: Request) {
   if (error) return error;
 
   const { resharedFromUser, ...body } = (await req.json()) as Partial<typeof stories.$inferInsert> & { resharedFromUser?: string };
+  if (!body.mediaUrl || !body.mediaType) {
+    return jsonResponse({ error: 'mediaUrl and mediaType are required' }, 400);
+  }
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
   const [story] = await db
     .insert(stories)
     .values({
-      ...body,
+      mediaUrl: body.mediaUrl,
+      mediaType: body.mediaType,
+      thumbnailUrl: body.thumbnailUrl,
+      text: body.text,
+      textColor: body.textColor,
+      backgroundColor: body.backgroundColor,
+      resharedFromId: body.resharedFromId,
       resharedFromUsername: body.resharedFromUsername ?? resharedFromUser,
       userId: userId!,
       expiresAt,

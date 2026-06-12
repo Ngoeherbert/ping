@@ -1,3 +1,4 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Eye, MessageSquare, UserX } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
@@ -5,7 +6,6 @@ import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
   Image,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Switch,

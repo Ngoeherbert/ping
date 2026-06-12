@@ -3,7 +3,7 @@ import { Bookmark, Heart, MessageCircle, MoreHorizontal, Send } from 'lucide-rea
 import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '@/lib/constants';
 import { useFeedStore } from '@/store/feedStore';
-import type { ISODateString, Post } from '@/types';
+import type { Post } from '@/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -113,7 +113,7 @@ export function PostCard({ post }: PostCardProps) {
   );
 }
 
-function formatRelativeTime(dateValue: ISODateString) {
+function formatRelativeTime(dateValue: string | Date) {
   const diff = Date.now() - new Date(dateValue).getTime();
   const minutes = Math.floor(diff / 60000);
   if (minutes < 1) return 'just now';
