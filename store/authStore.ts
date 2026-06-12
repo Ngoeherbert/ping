@@ -66,7 +66,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ isLoading: true, error: null });
       const result = await authClient.signIn.email({ email, password });
       if (result.error) throw new Error(result.error.message);
-      set({ user: result.data?.user as User, isAuthenticated: true });
+      set({ user: result.data?.user as unknown as User, isAuthenticated: true });
     } catch (error) {
       set({ error: getErrorMessage(error, 'Login failed') });
       throw error;
@@ -87,7 +87,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         },
       });
       if (result.error) throw new Error(result.error.message);
-      set({ user: result.data?.user as User, isAuthenticated: true });
+      set({ user: result.data?.user as unknown as User, isAuthenticated: true });
     } catch (error) {
       set({ error: getErrorMessage(error, 'Registration failed') });
       throw error;

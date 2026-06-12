@@ -1,9 +1,47 @@
 import Constants from 'expo-constants';
 
-export const API_URL =
-  Constants.expoConfig?.extra?.apiUrl ??
-  process.env.EXPO_PUBLIC_API_URL ??
-  'http://localhost:8081';
+function normalizeApiUrl(url: string) {
+  return url.replace(/\/$/, '');
+}
+
+function isLocalhostUrl(url?: string) {
+  return !!url && /^https?:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/i.test(url);
+}
+
+function getDevServerApiUrl() {
+  const expoConfig = Constants.expoConfig as
+    | (typeof Constants.expoConfig & { hostUri?: string })
+    | undefined;
+  const hostUri = expoConfig?.hostUri;
+  if (!hostUri) return undefined;
+
+  const host = hostUri.replace(/^https?:\/\//, '').replace(/^exp:\/\//, '');
+  const protocol = host.includes('exp.direct') ? 'https' : 'http';
+
+  return `${protocol}://${host}`;
+}
+
+function getApiUrl() {
+  const envUrl = process.env.EXPO_PUBLIC_API_URL;
+  const configUrl = Constants.expoConfig?.extra?.apiUrl as string | undefined;
+  const devServerUrl = getDevServerApiUrl();
+
+  if (envUrl && !isLocalhostUrl(envUrl)) {
+    return normalizeApiUrl(envUrl);
+  }
+
+  if (configUrl && !isLocalhostUrl(configUrl)) {
+    return normalizeApiUrl(configUrl);
+  }
+
+  if (devServerUrl) {
+    return normalizeApiUrl(devServerUrl);
+  }
+
+  return normalizeApiUrl(envUrl ?? configUrl ?? 'http://localhost:8081');
+}
+
+export const API_URL = getApiUrl();
 
 export const GOOGLE_CLIENT_ID =
   process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID ?? '';

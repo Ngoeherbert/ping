@@ -1,10 +1,8 @@
 import { auth } from '@/lib/auth';
-import type { APIRoute } from 'expo-router/server';
-
-export const GET: APIRoute = (req) => {
+export const GET = (req: Request) => {
   return auth.handler(req);
 };
 
-export const POST: APIRoute = (req) => {
+export const POST = (req: Request) => {
   return auth.handler(req);
 };

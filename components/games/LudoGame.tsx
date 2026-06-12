@@ -1,7 +1,8 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '@/lib/constants';
 import { useAuthStore } from '@/store/authStore';
 import { useGameStore } from '@/store/gameStore';
@@ -76,6 +77,7 @@ export function LudoGame({ sessionId }: Props) {
   const movePiece = async (pieceIndex: number) => {
     if (!activeSession || !isMyTurn || gameState.diceValue === null) return;
 
+    const diceValue = gameState.diceValue;
     const nextState: LudoState = JSON.parse(JSON.stringify(gameState)) as LudoState;
     const pieces = nextState.pieces[String(myPlayerIndex)];
     const piece = pieces[pieceIndex];
@@ -83,7 +85,7 @@ export function LudoGame({ sessionId }: Props) {
     if (piece.cell === -1 && nextState.diceValue === 6) {
       piece.cell = 0;
     } else if (piece.cell >= 0) {
-      piece.cell = Math.min(57, piece.cell + nextState.diceValue);
+      piece.cell = Math.min(57, piece.cell + diceValue);
     }
 
     const winnerEntry = Object.entries(nextState.pieces).find(([, candidatePieces]) =>

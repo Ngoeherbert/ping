@@ -1,10 +1,10 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Circle, Gamepad2, Grid, Target } from 'lucide-react-native';
 import {
   ActivityIndicator,
   Alert,
   Modal,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,

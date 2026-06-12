@@ -29,6 +29,7 @@ async function loadNotificationModules(): Promise<{
   if (!notificationHandlerConfigured) {
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
+        shouldShowAlert: true,
         shouldShowBanner: true,
         shouldShowList: true,
         shouldPlaySound: true,
@@ -96,10 +97,10 @@ export function useNotificationListeners(
     const responseListener = Notifications.addNotificationResponseReceivedListener(onResponse);
 
     cleanup = () => {
-      Notifications.removeNotificationSubscription(notificationListener);
-      Notifications.removeNotificationSubscription(responseListener);
+      notificationListener.remove();
+      responseListener.remove();
     };
-  });
+  }).catch(() => undefined);
 
   return () => {
     disposed = true;

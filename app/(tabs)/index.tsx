@@ -1,5 +1,6 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
-import { FlatList, RefreshControl, SafeAreaView, StatusBar, StyleSheet } from 'react-native';
+import { FlatList, RefreshControl, StatusBar, StyleSheet } from 'react-native';
 import { FeedHeader } from '@/components/feed/FeedHeader';
 import { PostCard } from '@/components/feed/PostCard';
 import { StoriesBar } from '@/components/stories/StoriesBar';

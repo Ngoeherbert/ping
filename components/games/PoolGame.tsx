@@ -1,7 +1,8 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '@/lib/constants';
 import { useAuthStore } from '@/store/authStore';
 import { useGameStore } from '@/store/gameStore';
@@ -60,8 +61,8 @@ export function PoolGame({ sessionId }: Props) {
     const nextScore = score + points;
     const nextShotsTaken = shotsTaken + 1;
     const isChallenger = activeSession.challengerId === user.id;
-    const challengerShots = Number(readStateValue(activeSession.state, 'challengerShots'));
-    const opponentShots = Number(readStateValue(activeSession.state, 'opponentShots'));
+    const challengerShots = Number(readStateValue(activeSession.state ?? null, 'challengerShots'));
+    const opponentShots = Number(readStateValue(activeSession.state ?? null, 'opponentShots'));
     const nextState: PoolState = isChallenger
       ? { challengerShots: nextShotsTaken, opponentShots }
       : { challengerShots, opponentShots: nextShotsTaken };

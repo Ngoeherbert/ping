@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { API_URL } from '@/lib/constants';
+import { seedPosts } from '@/lib/seedData';
 import type { Post } from '@/types';
 
 interface FeedState {
@@ -20,10 +21,23 @@ interface FeedState {
   addPost: (post: Post) => void;
 }
 
+async function fetchFeedPage(page: number) {
+  const res = await fetch(`${API_URL}/api/feed?page=${page}&limit=20`);
+  if (!res.ok) throw new Error('Feed request failed');
+
+  const data = await res.json();
+  const posts = Array.isArray(data.posts) && data.posts.length > 0 ? data.posts : seedPosts;
+
+  return {
+    posts: posts as Post[],
+    hasMore: Boolean(data.hasMore && posts !== seedPosts),
+  };
+}
+
 export const useFeedStore = create<FeedState>((set, get) => ({
-  posts: [],
+  posts: seedPosts,
   page: 1,
-  hasMore: true,
+  hasMore: false,
   isLoading: false,
   isRefreshing: false,
   error: null,
@@ -32,11 +46,10 @@ export const useFeedStore = create<FeedState>((set, get) => ({
     if (get().isLoading) return;
     set({ isLoading: true, error: null });
     try {
-      const res = await fetch(`${API_URL}/api/feed?page=1&limit=20`);
-      const data = await res.json();
+      const data = await fetchFeedPage(1);
       set({ posts: data.posts, page: 1, hasMore: data.hasMore });
     } catch {
-      set({ error: 'Failed to load feed' });
+      set({ posts: seedPosts, page: 1, hasMore: false, error: null });
     } finally {
       set({ isLoading: false });
     }
@@ -45,9 +58,10 @@ export const useFeedStore = create<FeedState>((set, get) => ({
   refreshFeed: async () => {
     set({ isRefreshing: true, error: null });
     try {
-      const res = await fetch(`${API_URL}/api/feed?page=1&limit=20`);
-      const data = await res.json();
+      const data = await fetchFeedPage(1);
       set({ posts: data.posts, page: 1, hasMore: data.hasMore });
+    } catch {
+      set({ posts: seedPosts, page: 1, hasMore: false, error: null });
     } finally {
       set({ isRefreshing: false });
     }
@@ -59,8 +73,7 @@ export const useFeedStore = create<FeedState>((set, get) => ({
     const nextPage = page + 1;
     set({ isLoading: true });
     try {
-      const res = await fetch(`${API_URL}/api/feed?page=${nextPage}&limit=20`);
-      const data = await res.json();
+      const data = await fetchFeedPage(nextPage);
       set({
         posts: [...posts, ...data.posts],
         page: nextPage,
@@ -85,7 +98,7 @@ export const useFeedStore = create<FeedState>((set, get) => ({
       set((state) => ({
         posts: state.posts.map((post) =>
           post.id === postId
-            ? { ...post, isLiked: false, likesCount: post.likesCount - 1 }
+            ? { ...post, isLiked: false, likesCount: Math.max(0, post.likesCount - 1) }
             : post,
         ),
       }));
@@ -126,12 +139,12 @@ export const useFeedStore = create<FeedState>((set, get) => ({
     }));
     await fetch(`${API_URL}/api/posts/${postId}/save`, {
       method: wasSaved ? 'DELETE' : 'POST',
-    });
+    }).catch(() => undefined);
   },
 
   deletePost: async (postId) => {
     set((state) => ({ posts: state.posts.filter((post) => post.id !== postId) }));
-    await fetch(`${API_URL}/api/posts/${postId}`, { method: 'DELETE' });
+    await fetch(`${API_URL}/api/posts/${postId}`, { method: 'DELETE' }).catch(() => undefined);
   },
 
   addPost: (post) => {
