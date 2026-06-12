@@ -25,18 +25,25 @@ export const useStoryStore = create<StoryState>((set, get) => ({
     set({ isLoading: true });
     try {
       const res = await fetch(`${API_URL}/api/stories`);
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
       const data = await res.json();
-      set({ storyGroups: data.groups });
+      set({ storyGroups: data.groups ?? [] }); // ✅ fallback if shape is wrong
+    } catch (err) {
+      console.error("fetchStories failed:", err);
+      // storyGroups stays as [] — no crash
     } finally {
       set({ isLoading: false });
     }
   },
 
   viewStory: async (storyId) => {
-    await fetch(`${API_URL}/api/stories/${storyId}/view`, { method: 'POST' });
+    await fetch(`${API_URL}/api/stories/${storyId}/view`, { method: "POST" });
   },
 
-  setActiveGroup: (index) => set({ activeGroupIndex: index, activeStoryIndex: 0 }),
+  setActiveGroup: (index) =>
+    set({ activeGroupIndex: index, activeStoryIndex: 0 }),
 
   nextStory: () => {
     const { activeGroupIndex, activeStoryIndex, storyGroups } = get();
