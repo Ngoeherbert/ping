@@ -5,7 +5,6 @@ import { ArrowLeft, Camera } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -16,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import type { KeyboardTypeOptions } from 'react-native';
+import { useToast } from '@/components/ui/Toast';
 import { BORDER_RADIUS, COLORS, FONT_SIZE, FONT_WEIGHT, SPACING } from '@/lib/constants';
 import { useAuthStore } from '@/store/authStore';
 import { useProfileStore } from '@/store/profileStore';
@@ -49,6 +49,7 @@ const fields: FieldConfig[] = [
 export default function EditProfileScreen() {
   const { user } = useAuthStore();
   const { updateProfile, profiles } = useProfileStore();
+  const { showToast } = useToast();
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const profile = user?.id ? profiles[user.id] : null;
@@ -92,11 +93,11 @@ export default function EditProfileScreen() {
 
   const handleSave = async () => {
     if (!form.name.trim()) {
-      Alert.alert('Error', 'Name is required.');
+      showToast({ type: 'error', title: 'Name is required' });
       return;
     }
     if (!form.username.trim()) {
-      Alert.alert('Error', 'Username is required.');
+      showToast({ type: 'error', title: 'Username is required' });
       return;
     }
 
@@ -114,7 +115,7 @@ export default function EditProfileScreen() {
       });
       router.back();
     } catch {
-      Alert.alert('Error', 'Failed to update profile.');
+      showToast({ type: 'error', title: 'Failed to update profile', message: 'Please try again.' });
     } finally {
       setIsSaving(false);
     }

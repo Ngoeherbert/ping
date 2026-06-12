@@ -5,7 +5,6 @@ import { Camera, Image as ImageIcon, X } from 'lucide-react-native';
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -14,7 +13,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useToast } from '@/components/ui/Toast';
 import { API_URL, COLORS } from '@/lib/constants';
+import { apiFetch } from '@/lib/apiFetch';
 import { uploadMedia } from '@/lib/uploadMedia';
 import { useAuthStore } from '@/store/authStore';
 import { useFeedStore } from '@/store/feedStore';
@@ -32,6 +33,7 @@ export default function CreateScreen() {
   const [isPosting, setIsPosting] = useState(false);
   const { addPost } = useFeedStore();
   const { user } = useAuthStore();
+  const { showToast } = useToast();
   const router = useRouter();
 
   const pickMedia = async () => {
@@ -52,7 +54,7 @@ export default function CreateScreen() {
   const openCamera = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Camera access is required.');
+      showToast({ type: 'error', title: 'Permission needed', message: 'Camera access is required.' });
       return;
     }
 
@@ -105,7 +107,7 @@ export default function CreateScreen() {
 
   const uploadAndPost = async () => {
     if (!mediaUri) {
-      Alert.alert('No media', 'Select a photo or video first.');
+      showToast({ type: 'error', title: 'No media selected', message: 'Select a photo or video first.' });
       return;
     }
 
@@ -124,7 +126,7 @@ export default function CreateScreen() {
       let createdPost = createLocalPost(uploadedUrl, mediaType);
 
       try {
-        const response = await fetch(`${API_URL}/api/posts`, {
+        const response = await apiFetch(`${API_URL}/api/posts`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -138,18 +140,23 @@ export default function CreateScreen() {
         if (response.ok) {
           const data = await response.json();
           if (data.post) createdPost = data.post;
+        } else {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.error ?? 'Server could not create the post.');
         }
-      } catch {
-        // Network/API failures fall back to an optimistic local post.
+      } catch (err) {
+        if (err instanceof Error && err.message !== 'Failed to fetch') throw err;
+        // Offline/network failures fall back to an optimistic local post.
       }
 
       addPost(createdPost);
+      showToast({ type: 'success', title: 'Post shared' });
       setMediaUri(null);
       setCaption('');
       setLocation('');
       router.replace('/(tabs)');
-    } catch {
-      Alert.alert('Error', 'Failed to create post. Please try again.');
+    } catch (err) {
+      showToast({ type: 'error', title: 'Failed to create post', message: err instanceof Error ? err.message : 'Please try again.' });
     } finally {
       setIsPosting(false);
     }

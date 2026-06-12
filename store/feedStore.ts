@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { API_URL } from '@/lib/constants';
+import { apiFetch } from '@/lib/apiFetch';
 import { seedPosts } from '@/lib/seedData';
 import type { Post } from '@/types';
 
@@ -22,7 +23,7 @@ interface FeedState {
 }
 
 async function fetchFeedPage(page: number) {
-  const res = await fetch(`${API_URL}/api/feed?page=${page}&limit=20`);
+  const res = await apiFetch(`${API_URL}/api/feed?page=${page}&limit=20`);
   if (!res.ok) throw new Error('Feed request failed');
 
   const data = await res.json();
@@ -93,7 +94,7 @@ export const useFeedStore = create<FeedState>((set, get) => ({
       ),
     }));
     try {
-      await fetch(`${API_URL}/api/posts/${postId}/like`, { method: 'POST' });
+      await apiFetch(`${API_URL}/api/posts/${postId}/like`, { method: 'POST' });
     } catch {
       set((state) => ({
         posts: state.posts.map((post) =>
@@ -118,7 +119,7 @@ export const useFeedStore = create<FeedState>((set, get) => ({
       ),
     }));
     try {
-      await fetch(`${API_URL}/api/posts/${postId}/like`, { method: 'DELETE' });
+      await apiFetch(`${API_URL}/api/posts/${postId}/like`, { method: 'DELETE' });
     } catch {
       set((state) => ({
         posts: state.posts.map((post) =>
@@ -137,14 +138,14 @@ export const useFeedStore = create<FeedState>((set, get) => ({
         post.id === postId ? { ...post, isSaved: !post.isSaved } : post,
       ),
     }));
-    await fetch(`${API_URL}/api/posts/${postId}/save`, {
+    await apiFetch(`${API_URL}/api/posts/${postId}/save`, {
       method: wasSaved ? 'DELETE' : 'POST',
     }).catch(() => undefined);
   },
 
   deletePost: async (postId) => {
     set((state) => ({ posts: state.posts.filter((post) => post.id !== postId) }));
-    await fetch(`${API_URL}/api/posts/${postId}`, { method: 'DELETE' }).catch(() => undefined);
+    await apiFetch(`${API_URL}/api/posts/${postId}`, { method: 'DELETE' }).catch(() => undefined);
   },
 
   addPost: (post) => {

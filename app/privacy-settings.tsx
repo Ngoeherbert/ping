@@ -13,7 +13,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useToast } from '@/components/ui/Toast';
 import { API_URL, BORDER_RADIUS, COLORS, FONT_SIZE, FONT_WEIGHT, SPACING } from '@/lib/constants';
+import { apiFetch } from '@/lib/apiFetch';
 import { usePrivacyStore } from '@/store/privacyStore';
 import type { StatusVisibility, UserProfile } from '@/types';
 
@@ -37,17 +39,22 @@ export default function PrivacySettingsScreen() {
     unblockStatusForUser,
   } = usePrivacyStore();
   const [followers, setFollowers] = useState<UserProfile[]>([]);
+  const { showToast } = useToast();
   const router = useRouter();
 
   useEffect(() => {
-    fetchPrivacy();
+    fetchPrivacy().catch(() => showToast({ type: 'error', title: 'Privacy unavailable', message: 'Showing safe default settings.' }));
     loadFollowers();
   }, [fetchPrivacy]);
 
   const loadFollowers = async () => {
-    const res = await fetch(`${API_URL}/api/users/me/followers`);
-    const data = (await res.json()) as { users?: UserProfile[] };
-    setFollowers(data.users ?? []);
+    try {
+      const res = await apiFetch(`${API_URL}/api/users/me/followers`);
+      const data = (await res.json()) as { users?: UserProfile[] };
+      setFollowers(data.users ?? []);
+    } catch {
+      setFollowers([]);
+    }
   };
 
   if (!settings && isLoading) {
@@ -58,7 +65,23 @@ export default function PrivacySettingsScreen() {
     );
   }
 
-  if (!settings) return null;
+  if (!settings) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.headerButton}>
+            <ArrowLeft color={COLORS.text} size={22} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Privacy</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyTitle}>Privacy settings unavailable</Text>
+          <Text style={styles.emptyText}>Please check your connection and try again.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -188,7 +211,7 @@ function PrivacyFollowerSection({
         ))}
         {!followers.length && (
           <View style={styles.emptyRow}>
-            <Text style={styles.emptyText}>No followers yet</Text>
+            <Text style={styles.emptyRowText}>No followers yet</Text>
           </View>
         )}
       </View>
@@ -257,7 +280,7 @@ const styles = StyleSheet.create({
   userName: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.bold, color: COLORS.text },
   userUsername: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary, marginTop: 2 },
   emptyRow: { paddingVertical: 20, alignItems: 'center' },
-  emptyText: { color: COLORS.textDisabled, fontSize: FONT_SIZE.sm },
+  emptyRowText: { color: COLORS.textDisabled, fontSize: FONT_SIZE.sm },
   infoBox: {
     margin: SPACING.lg,
     backgroundColor: COLORS.primaryLight,
@@ -266,5 +289,8 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: COLORS.primary,
   },
+  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: SPACING.xl },
+  emptyTitle: { color: COLORS.text, fontSize: FONT_SIZE.xl, fontWeight: FONT_WEIGHT.bold, marginBottom: SPACING.sm },
+  emptyText: { color: COLORS.textSecondary, fontSize: FONT_SIZE.md, textAlign: 'center' },
   infoText: { fontSize: FONT_SIZE.sm, color: COLORS.textSecondary, lineHeight: 19 },
 });

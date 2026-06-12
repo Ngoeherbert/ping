@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { API_URL } from '@/lib/constants';
+import { apiFetch } from '@/lib/apiFetch';
 import type { PrivacySettings, ReadReceiptException, StatusBlock } from '@/types';
 
 interface PrivacyState {
@@ -17,6 +18,12 @@ interface PrivacyState {
   isReceiptHiddenFrom: (userId: string) => boolean;
   isStatusBlockedFor: (userId: string) => boolean;
 }
+
+const DEFAULT_PRIVACY_SETTINGS: PrivacySettings = {
+  readReceiptsEnabled: true,
+  statusVisibility: 'followers',
+  showOnlineStatus: true,
+};
 
 interface PrivacyResponse {
   settings: PrivacySettings;
@@ -39,7 +46,7 @@ export const usePrivacyStore = create<PrivacyState>((set, get) => ({
   fetchPrivacy: async () => {
     set({ isLoading: true });
     try {
-      const res = await fetch(`${API_URL}/api/users/me/privacy`);
+      const res = await apiFetch(`${API_URL}/api/users/me/privacy`);
       const data = await readJson<PrivacyResponse>(res);
       set({
         settings: data.settings,
@@ -48,13 +55,12 @@ export const usePrivacyStore = create<PrivacyState>((set, get) => ({
         isLoading: false,
       });
     } catch (error) {
-      set({ isLoading: false });
-      throw error;
+      set({ settings: DEFAULT_PRIVACY_SETTINGS, receiptExceptions: [], statusBlocks: [], isLoading: false });
     }
   },
 
   updateSettings: async (updates) => {
-    const res = await fetch(`${API_URL}/api/users/me/privacy`, {
+    const res = await apiFetch(`${API_URL}/api/users/me/privacy`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),
@@ -64,7 +70,7 @@ export const usePrivacyStore = create<PrivacyState>((set, get) => ({
   },
 
   hideReceiptFromUser: async (targetUserId) => {
-    const res = await fetch(`${API_URL}/api/users/me/privacy/receipt-exception`, {
+    const res = await apiFetch(`${API_URL}/api/users/me/privacy/receipt-exception`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ targetUserId }),
@@ -79,7 +85,7 @@ export const usePrivacyStore = create<PrivacyState>((set, get) => ({
   },
 
   restoreReceiptForUser: async (targetUserId) => {
-    const res = await fetch(`${API_URL}/api/users/me/privacy/receipt-exception`, {
+    const res = await apiFetch(`${API_URL}/api/users/me/privacy/receipt-exception`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ targetUserId }),
@@ -93,7 +99,7 @@ export const usePrivacyStore = create<PrivacyState>((set, get) => ({
   },
 
   blockStatusForUser: async (blockedUserId) => {
-    const res = await fetch(`${API_URL}/api/users/me/privacy/status-block`, {
+    const res = await apiFetch(`${API_URL}/api/users/me/privacy/status-block`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ blockedUserId }),
@@ -108,7 +114,7 @@ export const usePrivacyStore = create<PrivacyState>((set, get) => ({
   },
 
   unblockStatusForUser: async (blockedUserId) => {
-    const res = await fetch(`${API_URL}/api/users/me/privacy/status-block`, {
+    const res = await apiFetch(`${API_URL}/api/users/me/privacy/status-block`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ blockedUserId }),

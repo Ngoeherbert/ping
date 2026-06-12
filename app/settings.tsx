@@ -15,7 +15,6 @@ import {
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Switch,
@@ -23,6 +22,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
+import { useToast } from '@/components/ui/Toast';
 import { BORDER_RADIUS, COLORS, FONT_SIZE, FONT_WEIGHT, SPACING } from '@/lib/constants';
 import { useAuthStore } from '@/store/authStore';
 
@@ -40,32 +41,27 @@ type SettingItem = {
 export default function SettingsScreen() {
   const { logout } = useAuthStore();
   const router = useRouter();
+  const { showToast } = useToast();
+  const [confirmAction, setConfirmAction] = useState<'logout' | 'delete' | null>(null);
   const [notifications, setNotifications] = useState(true);
   const [privateAccount, setPrivateAccount] = useState(false);
 
-  const handleLogout = () => {
-    Alert.alert('Log Out', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Log Out',
-        style: 'destructive',
-        onPress: async () => {
-          await logout();
-          router.replace('/(auth)/login');
-        },
-      },
-    ]);
+  const handleConfirm = async () => {
+    if (confirmAction === 'logout') {
+      await logout();
+      setConfirmAction(null);
+      router.replace('/(auth)/login');
+      return;
+    }
+
+    if (confirmAction === 'delete') {
+      setConfirmAction(null);
+      showToast({ type: 'info', title: 'Delete account coming soon', message: 'Account deletion will be available in a future update.' });
+    }
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      'Delete Account',
-      'This will permanently delete your account and all your data. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => undefined },
-      ],
-    );
+  const showComingSoon = (title: string, message: string) => {
+    showToast({ type: 'info', title, message });
   };
 
   const sections: Array<{ title: string; items: SettingItem[] }> = [
@@ -96,12 +92,12 @@ export default function SettingsScreen() {
         {
           icon: <Shield color={COLORS.primary} size={20} />,
           label: 'Two-Factor Authentication',
-          onPress: () => Alert.alert('Coming soon', 'Two-factor authentication is not available yet.'),
+          onPress: () => showComingSoon('Two-factor authentication coming soon', 'This security option is not available yet.'),
         },
         {
           icon: <Eye color={COLORS.primary} size={20} />,
           label: 'Change Password',
-          onPress: () => Alert.alert('Coming soon', 'Password changes will be available soon.'),
+          onPress: () => showComingSoon('Password changes coming soon', 'Password changes will be available soon.'),
         },
       ],
     },
@@ -111,7 +107,7 @@ export default function SettingsScreen() {
         {
           icon: <HelpCircle color={COLORS.primary} size={20} />,
           label: 'Help & Support',
-          onPress: () => Alert.alert('Help & Support', 'Support resources will be added soon.'),
+          onPress: () => showComingSoon('Help & Support coming soon', 'Support resources will be added soon.'),
         },
       ],
     },
@@ -121,13 +117,13 @@ export default function SettingsScreen() {
         {
           icon: <LogOut color={COLORS.error} size={20} />,
           label: 'Log Out',
-          onPress: handleLogout,
+          onPress: () => setConfirmAction('logout'),
           danger: true,
         },
         {
           icon: <Trash2 color={COLORS.error} size={20} />,
           label: 'Delete Account',
-          onPress: handleDeleteAccount,
+          onPress: () => setConfirmAction('delete'),
           danger: true,
         },
       ],
@@ -186,6 +182,19 @@ export default function SettingsScreen() {
 
         <Text style={styles.version}>Ping v1.0.0</Text>
       </ScrollView>
+      <ConfirmModal
+        visible={confirmAction !== null}
+        title={confirmAction === 'delete' ? 'Delete Account' : 'Log Out'}
+        message={
+          confirmAction === 'delete'
+            ? 'This will permanently delete your account and all your data. This cannot be undone.'
+            : 'Are you sure you want to log out?'
+        }
+        confirmLabel={confirmAction === 'delete' ? 'Delete' : 'Log Out'}
+        destructive
+        onCancel={() => setConfirmAction(null)}
+        onConfirm={handleConfirm}
+      />
     </SafeAreaView>
   );
 }
