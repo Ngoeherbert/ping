@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { API_URL } from '@/lib/constants';
+import { apiFetch } from '@/lib/apiFetch';
+import { useAuthStore } from '@/store/authStore';
 import type { UserProfile } from '@/types';
 
 interface ProfileState {
@@ -18,7 +20,7 @@ export const useProfileStore = create<ProfileState>((set) => ({
 
   fetchProfile: async (userId) => {
     set({ isLoading: true });
-    const res = await fetch(`${API_URL}/api/users/${userId}`);
+    const res = await apiFetch(`${API_URL}/api/users/${userId}`);
     const data = await res.json();
     set((state) => ({
       profiles: { ...state.profiles, [userId]: data },
@@ -39,7 +41,7 @@ export const useProfileStore = create<ProfileState>((set) => ({
           : state.profiles[userId],
       },
     }));
-    await fetch(`${API_URL}/api/users/${userId}/follow`, { method: 'POST' });
+    await apiFetch(`${API_URL}/api/users/${userId}/follow`, { method: 'POST' });
   },
 
   unfollowUser: async (userId) => {
@@ -58,16 +60,18 @@ export const useProfileStore = create<ProfileState>((set) => ({
           : state.profiles[userId],
       },
     }));
-    await fetch(`${API_URL}/api/users/${userId}/follow`, { method: 'DELETE' });
+    await apiFetch(`${API_URL}/api/users/${userId}/follow`, { method: 'DELETE' });
   },
 
   updateProfile: async (data) => {
-    const res = await fetch(`${API_URL}/api/users/me`, {
+    const res = await apiFetch(`${API_URL}/api/users/me`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
+    if (!res.ok) throw new Error('Profile update failed');
     const updated = await res.json();
+    useAuthStore.getState().setUser(updated);
     set((state) => ({ profiles: { ...state.profiles, [updated.id]: updated } }));
   },
 }));

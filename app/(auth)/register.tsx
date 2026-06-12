@@ -3,7 +3,6 @@ import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,6 +13,7 @@ import {
   type TextInputProps,
 } from 'react-native';
 import { COLORS } from '@/lib/constants';
+import { useToast } from '@/components/ui/Toast';
 import { useAuthStore } from '@/store/authStore';
 
 type RegisterField = {
@@ -30,24 +30,35 @@ export default function RegisterScreen() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { register, isLoading, error, clearError } = useAuthStore();
+  const { register, loginWithGoogle, isLoading, error, clearError } = useAuthStore();
+  const { showToast } = useToast();
   const router = useRouter();
 
   const handleRegister = async () => {
     if (!name || !username || !email || !password) {
-      Alert.alert('Error', 'All fields are required');
+      showToast({ type: 'error', title: 'Missing details', message: 'All fields are required.' });
       return;
     }
     if (password.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters');
+      showToast({ type: 'error', title: 'Weak password', message: 'Password must be at least 8 characters.' });
       return;
     }
 
     try {
       await register({ name, username, email, password });
-      router.replace('/(tabs)');
-    } catch {
-      // Error is set in the auth store.
+      router.replace('/complete-profile');
+    } catch (err) {
+      showToast({ type: 'error', title: 'Registration failed', message: err instanceof Error ? err.message : 'Please try again.' });
+    }
+  };
+
+
+  const handleGoogle = async () => {
+    try {
+      await loginWithGoogle();
+      router.replace('/complete-profile');
+    } catch (err) {
+      showToast({ type: 'error', title: 'Google sign-up failed', message: err instanceof Error ? err.message : 'Please try again.' });
     }
   };
 
@@ -106,6 +117,16 @@ export default function RegisterScreen() {
           ) : (
             <Text style={styles.buttonText}>Create Account</Text>
           )}
+        </TouchableOpacity>
+
+        <View style={styles.divider}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>OR</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <TouchableOpacity style={styles.googleButton} onPress={handleGoogle} disabled={isLoading}>
+          <Text style={styles.googleText}>Continue with Google</Text>
         </TouchableOpacity>
 
         <View style={styles.loginRow}>
@@ -172,6 +193,18 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  divider: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: COLORS.border },
+  dividerText: { color: COLORS.muted, marginHorizontal: 12, fontSize: 13 },
+  googleButton: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  googleText: { color: COLORS.text, fontWeight: '600', fontSize: 15 },
   loginRow: { flexDirection: 'row', justifyContent: 'center' },
   loginText: { color: COLORS.textSecondary, fontSize: 14 },
   loginLink: { color: COLORS.primary, fontWeight: '700', fontSize: 14 },

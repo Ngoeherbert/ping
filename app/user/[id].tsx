@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { apiFetch } from '@/lib/apiFetch';
 import { API_URL, BORDER_RADIUS, COLORS, FONT_SIZE, FONT_WEIGHT, SPACING } from '@/lib/constants';
 import { useProfileStore } from '@/store/profileStore';
 import type { Post } from '@/types';
@@ -58,7 +59,7 @@ export default function UserProfileScreen() {
 
   const startConversation = async () => {
     if (!id) return;
-    const res = await fetch(`${API_URL}/api/messages`, {
+    const res = await apiFetch(`${API_URL}/api/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: id }),

@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { apiFetch } from '@/lib/apiFetch';
 import { API_URL, COLORS } from '@/lib/constants';
 import type { Post, UserProfile } from '@/types';
 
@@ -31,7 +32,7 @@ export default function ExploreScreen() {
   const router = useRouter();
 
   useEffect(() => {
-    fetch(`${API_URL}/api/explore/trending`)
+    apiFetch(`${API_URL}/api/explore/trending`)
       .then((response) => response.json())
       .then((data) => setTrendingPosts(data.posts ?? []))
       .catch(() => setTrendingPosts([]));
@@ -43,7 +44,7 @@ export default function ExploreScreen() {
       return;
     }
 
-    const response = await fetch(`${API_URL}/api/explore/search?q=${encodeURIComponent(value)}`);
+    const response = await apiFetch(`${API_URL}/api/explore/search?q=${encodeURIComponent(value)}`);
     const data = await response.json();
     setResults({ posts: data.posts ?? [], users: data.users ?? [] });
   }, []);

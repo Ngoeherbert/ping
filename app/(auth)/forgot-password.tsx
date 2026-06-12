@@ -2,29 +2,34 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  Alert,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useToast } from '@/components/ui/Toast';
 import { forgetPassword } from '@/lib/authClient';
 import { COLORS } from '@/lib/constants';
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
+  const { showToast } = useToast();
   const router = useRouter();
 
   const handleSend = async () => {
     if (!email) {
-      Alert.alert('Error', 'Enter your email');
+      showToast({ type: 'error', title: 'Missing email', message: 'Enter your email.' });
       return;
     }
 
-    await forgetPassword({ email, redirectTo: '/reset-password' });
-    setSent(true);
+    try {
+      await forgetPassword({ email, redirectTo: '/reset-password' });
+      setSent(true);
+    } catch {
+      showToast({ type: 'error', title: 'Reset failed', message: 'Unable to send a reset link right now.' });
+    }
   };
 
   if (sent) {

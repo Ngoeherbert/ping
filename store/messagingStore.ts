@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { API_URL } from '@/lib/constants';
+import { apiFetch } from '@/lib/apiFetch';
 import type { Conversation, Message } from '@/types';
 
 interface MessagingState {
@@ -27,7 +28,7 @@ export const useMessagingStore = create<MessagingState>((set) => ({
 
   fetchConversations: async () => {
     set({ isLoading: true });
-    const res = await fetch(`${API_URL}/api/messages`);
+    const res = await apiFetch(`${API_URL}/api/messages`);
     const data = await res.json();
     set({
       conversations: data.conversations,
@@ -37,7 +38,7 @@ export const useMessagingStore = create<MessagingState>((set) => ({
   },
 
   fetchMessages: async (conversationId) => {
-    const res = await fetch(`${API_URL}/api/messages/${conversationId}`);
+    const res = await apiFetch(`${API_URL}/api/messages/${conversationId}`);
     const data = await res.json();
     set((state) => ({
       messages: { ...state.messages, [conversationId]: data.messages },
@@ -60,7 +61,7 @@ export const useMessagingStore = create<MessagingState>((set) => ({
         [conversationId]: [...(state.messages[conversationId] ?? []), tempMsg],
       },
     }));
-    const res = await fetch(`${API_URL}/api/messages/${conversationId}`, {
+    const res = await apiFetch(`${API_URL}/api/messages/${conversationId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content, mediaUrl }),
@@ -77,7 +78,7 @@ export const useMessagingStore = create<MessagingState>((set) => ({
   },
 
   createConversation: async (userId) => {
-    const res = await fetch(`${API_URL}/api/messages`, {
+    const res = await apiFetch(`${API_URL}/api/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId }),
@@ -87,7 +88,7 @@ export const useMessagingStore = create<MessagingState>((set) => ({
   },
 
   markRead: async (conversationId) => {
-    await fetch(`${API_URL}/api/messages/${conversationId}/read`, { method: 'POST' });
+    await apiFetch(`${API_URL}/api/messages/${conversationId}/read`, { method: 'POST' });
     set((state) => ({
       conversations: state.conversations.map((conversation) =>
         conversation.id === conversationId

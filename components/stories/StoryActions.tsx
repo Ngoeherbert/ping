@@ -1,7 +1,9 @@
 import Constants from 'expo-constants';
 import * as FileSystem from 'expo-file-system';
+import * as MediaLibrary from 'expo-media-library';
 import { Download, RefreshCw } from 'lucide-react-native';
 import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { apiFetch } from '@/lib/apiFetch';
 import { API_URL, COLORS } from '@/lib/constants';
 import type { Story } from '@/types';
 
@@ -25,7 +27,6 @@ export function StoryActions({ story, onReshared }: Props) {
     }
 
     try {
-      const MediaLibrary = await import('expo-media-library');
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Permission needed', 'Allow Ping to save media to your library.');
@@ -55,7 +56,7 @@ export function StoryActions({ story, onReshared }: Props) {
         text: 'Reshare',
         onPress: async () => {
           try {
-            const res = await fetch(`${API_URL}/api/stories`, {
+            const res = await apiFetch(`${API_URL}/api/stories`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({

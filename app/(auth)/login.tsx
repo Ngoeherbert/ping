@@ -3,7 +3,6 @@ import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -13,34 +12,36 @@ import {
   View,
 } from 'react-native';
 import { COLORS } from '@/lib/constants';
+import { useToast } from '@/components/ui/Toast';
 import { useAuthStore } from '@/store/authStore';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login, loginWithGoogle, isLoading, error, clearError } = useAuthStore();
+  const { showToast } = useToast();
   const router = useRouter();
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please enter email and password');
+      showToast({ type: 'error', title: 'Missing details', message: 'Please enter email and password.' });
       return;
     }
 
     try {
       await login(email, password);
       router.replace('/(tabs)');
-    } catch {
-      // Error is set in the auth store.
+    } catch (err) {
+      showToast({ type: 'error', title: 'Login failed', message: err instanceof Error ? err.message : 'Please try again.' });
     }
   };
 
   const handleGoogle = async () => {
     try {
       await loginWithGoogle();
-      router.replace('/(tabs)');
-    } catch {
-      // Error is set in the auth store.
+      router.replace('/complete-profile');
+    } catch (err) {
+      showToast({ type: 'error', title: 'Google sign-in failed', message: err instanceof Error ? err.message : 'Please try again.' });
     }
   };
 
