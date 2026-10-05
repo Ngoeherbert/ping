@@ -1,6 +1,9 @@
 import { HugeiconsIcon } from "@hugeicons/react-native";
 import { colors } from "../theme";
 import IconFiller from "../constants/iconFiller";
+import { libraryIcons, filledIconNames } from "../constants/icons";
+
+const FILLED = new Set(filledIconNames);
 
 export default function Icon({
   icon,
@@ -11,14 +14,18 @@ export default function Icon({
   ...rest
 }) {
   // Filled icons: heart, bookmark, verified
-  if (name) {
+  if (name && FILLED.has(name)) {
     return <IconFiller name={name} size={size} color={color} {...rest} />;
   }
 
-  // Hugeicons library icons
+  // Named icons from the library registry, or an icon passed directly
+  const resolved = name ? libraryIcons[name] : undefined;
+  const data = resolved ?? icon;
+  if (!data) return null;
+
   return (
     <HugeiconsIcon
-      icon={icon}
+      icon={data}
       size={size}
       color={color}
       strokeWidth={strokeWidth}

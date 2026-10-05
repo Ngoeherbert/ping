@@ -1,5 +1,4 @@
 import { View, Text } from 'react-native';
-import { GameController03Icon } from '@hugeicons/core-free-icons';
 import Icon from './Icon';
 import { BUBBLE_RADIUS } from '../theme/bubble';
 
@@ -46,7 +45,7 @@ export default function GameBubble({ message }) {
             justifyContent: 'center',
           }}
         >
-          <Icon icon={GameController03Icon} size={22} color="#fff" />
+          <Icon name="game" size={22} color="#fff" />
         </View>
         <View style={{ flex: 1 }}>
           <Text numberOfLines={1} style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>

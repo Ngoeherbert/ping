@@ -1,20 +1,13 @@
 import { Tabs, router } from "expo-router";
-import {
-  Home01Icon,
-  PlayCircleIcon,
-  AddCircleIcon,
-  BubbleChatIcon,
-  UserIcon,
-} from "@hugeicons/core-free-icons";
 import Icon from "../../src/components/Icon";
 import { colors } from "../../src/theme";
 import { haptic } from "../../src/utils/haptics";
 
 const tabIcon =
-  (icon, extra = 0) =>
+  (name, extra = 0) =>
   ({ color, size, focused }) => (
     <Icon
-      icon={icon}
+      name={name}
       size={size + extra}
       color={color}
       strokeWidth={focused ? 2 : 1.5}
@@ -38,15 +31,15 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="(home)"
-        options={{ title: "Home", tabBarIcon: tabIcon(Home01Icon) }}
+        options={{ title: "Home", tabBarIcon: tabIcon("home") }}
       />
       <Tabs.Screen
         name="videos"
-        options={{ title: "Videos", tabBarIcon: tabIcon(PlayCircleIcon) }}
+        options={{ title: "Videos", tabBarIcon: tabIcon("videos") }}
       />
       <Tabs.Screen
         name="create"
-        options={{ title: "", tabBarIcon: tabIcon(AddCircleIcon, 10) }}
+        options={{ title: "", tabBarIcon: tabIcon("create", 10) }}
         listeners={{
           tabPress: (e) => {
             e.preventDefault();
@@ -57,11 +50,11 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="(chats)"
-        options={{ title: "Chats", tabBarIcon: tabIcon(BubbleChatIcon) }}
+        options={{ title: "Chats", tabBarIcon: tabIcon("chats") }}
       />
       <Tabs.Screen
         name="(profile)"
-        options={{ title: "Profile", tabBarIcon: tabIcon(UserIcon) }}
+        options={{ title: "Profile", tabBarIcon: tabIcon("profile") }}
       />
     </Tabs>
   );

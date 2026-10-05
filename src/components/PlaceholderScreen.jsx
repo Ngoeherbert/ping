@@ -1,8 +1,7 @@
 import { View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useSegments } from 'expo-router';
-import { HugeiconsIcon } from '@hugeicons/react-native';
-import { ArrowLeft01Icon } from '@hugeicons/core-free-icons';
+import Icon from './Icon';
 
 export default function PlaceholderScreen({ title, back = true }) {
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/'));
@@ -21,7 +20,7 @@ export default function PlaceholderScreen({ title, back = true }) {
       <View style={{ height: 48, justifyContent: 'center', paddingHorizontal: 12 }}>
         {back && (
           <Pressable onPress={goBack} hitSlop={12} style={{ width: 40 }}>
-            <HugeiconsIcon icon={ArrowLeft01Icon} size={26} color="#111" />
+            <Icon name="back" size={26} color="#111" />
           </Pressable>
         )}
       </View>

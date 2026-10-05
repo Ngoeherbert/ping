@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import { PlayIcon, PauseIcon } from '@hugeicons/core-free-icons';
 import Icon from '../Icon';
 import { bubbleColors } from '../../theme/bubble';
 import { formatDuration } from '../../utils/format';
@@ -52,7 +51,7 @@ export default function VoiceMessage({ message }) {
           justifyContent: 'center',
         }}
       >
-        <Icon icon={status.playing ? PauseIcon : PlayIcon} size={18} color={c.btnIcon} />
+        <Icon name={status.playing ? 'pause' : 'play'} size={18} color={c.btnIcon} />
       </Pressable>
 
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 2, height: 26 }}>

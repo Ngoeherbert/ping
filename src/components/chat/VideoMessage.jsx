@@ -1,6 +1,5 @@
 import { View, Text } from 'react-native';
 import { Image } from 'expo-image';
-import { PlayIcon } from '@hugeicons/core-free-icons';
 import Icon from '../Icon';
 import { mediaSize, formatDuration } from '../../utils/format';
 import { BUBBLE_RADIUS } from '../../theme/bubble';
@@ -40,7 +39,7 @@ export default function VideoMessage({ message }) {
             justifyContent: 'center',
           }}
         >
-          <Icon icon={PlayIcon} size={24} color="#FFFFFF" />
+          <Icon name="play" size={24} color="#FFFFFF" />
         </View>
       </View>
       <View

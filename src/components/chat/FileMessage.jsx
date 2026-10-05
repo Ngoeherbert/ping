@@ -1,5 +1,4 @@
 import { View, Text } from 'react-native';
-import { File01Icon, Download01Icon } from '@hugeicons/core-free-icons';
 import Icon from '../Icon';
 import { bubbleColors } from '../../theme/bubble';
 import { formatBytes } from '../../utils/format';
@@ -20,7 +19,7 @@ export default function FileMessage({ message }) {
           justifyContent: 'center',
         }}
       >
-        <Icon icon={File01Icon} size={22} color={c.text} />
+        <Icon name="file" size={22} color={c.text} />
       </View>
       <View style={{ flex: 1 }}>
         <Text numberOfLines={1} style={{ color: c.text, fontSize: 15, fontWeight: '600' }}>
@@ -30,7 +29,7 @@ export default function FileMessage({ message }) {
           {ext} · {formatBytes(message.size)}
         </Text>
       </View>
-      <Icon icon={Download01Icon} size={20} color={c.sub} />
+      <Icon name="download" size={20} color={c.sub} />
     </View>
   );
 }

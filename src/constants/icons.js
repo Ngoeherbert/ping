@@ -1,34 +1,70 @@
 import {
-  Home01Icon,
-  PlayCircleIcon,
+  Home05Icon,
+  PlayListIcon,
   AddCircleIcon,
-  BubbleChatIcon,
-  UserIcon,
+  Comment02Icon,
+  User02Icon,
   ArrowLeft01Icon,
   SearchIcon,
-  Notification03Icon,
+  BellIcon,
   PlayIcon,
   PauseIcon,
-  File01Icon,
+  File02Icon,
   Download01Icon,
   GameController03Icon,
+  Alert01Icon,
+  ArrowReloadHorizontalIcon,
+  AudioLinesIcon,
+  Bookmark02Icon,
+  CheckCheckIcon,
+  CheckIcon,
+  VolumeLowIcon,
+  VolumeMute02Icon,
+  Image02Icon,
+  Comment01Icon,
+  LinkForwardIcon,
+  Forward02Icon,
+  Share03Icon,
+  SmilePlusIcon,
 } from "@hugeicons/core-free-icons";
 
 // name -> Hugeicons icon. To add an icon: import it above, add a line here.
 export const libraryIcons = {
-  home: Home01Icon,
-  videos: PlayCircleIcon,
-  create: AddCircleIcon,
-  chats: BubbleChatIcon,
-  profile: UserIcon,
+  profile: User02Icon,
   back: ArrowLeft01Icon,
   search: SearchIcon,
-  notifications: Notification03Icon,
   play: PlayIcon,
   pause: PauseIcon,
-  file: File01Icon,
+  file: File02Icon,
   download: Download01Icon,
   game: GameController03Icon,
+
+  // tab icon
+  home: Home05Icon,
+  create: AddCircleIcon,
+  reels: PlayListIcon,
+
+  // message
+  chats: Comment02Icon,
+  audio: AudioLinesIcon,
+  check: CheckIcon,
+  checkDouble: CheckCheckIcon,
+
+  // post
+  repost: ArrowReloadHorizontalIcon,
+  comment: Comment01Icon,
+
+  // re-usable
+  notifications: BellIcon,
+  volume: VolumeLowIcon,
+  volumeMute: VolumeMute02Icon,
+  report: Alert01Icon,
+  bookmark: Bookmark02Icon,
+  image: Image02Icon,
+  fastForward: Forward02Icon,
+  forward: LinkForwardIcon,
+  share: Share03Icon,
+  addReaction: SmilePlusIcon,
 };
 
 // Filled icons live in IconFiller.js
