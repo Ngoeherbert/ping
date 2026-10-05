@@ -35,7 +35,7 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="videos"
-        options={{ title: "Videos", tabBarIcon: tabIcon("videos") }}
+        options={{ title: "Videos", tabBarIcon: tabIcon("reel") }}
       />
       <Tabs.Screen
         name="create"

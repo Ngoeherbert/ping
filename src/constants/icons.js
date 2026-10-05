@@ -42,7 +42,7 @@ export const libraryIcons = {
   // tab icon
   home: Home05Icon,
   create: AddCircleIcon,
-  reels: PlayListIcon,
+  reel: PlayListIcon,
 
   // message
   chats: Comment02Icon,
