@@ -19,6 +19,7 @@ export { useNotificationsStore } from "./notifications";
 export { useExploreStore } from "./explore";
 export { useSettingsStore } from "./settings";
 export { useFeedStore } from "./feed";
+export { useOverlaysStore } from "./overlays";
 
 export * from "./realtime";
 export * from "./helpers";
@@ -156,3 +157,9 @@ export {
   selectFeedCoordinatorError,
   selectActiveFeeds,
 } from "./feed";
+
+export {
+  selectOverlays,
+  selectTopOverlay,
+  selectHasOverlay,
+} from "./overlays";

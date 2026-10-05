@@ -20,12 +20,30 @@ import {
   CheckIcon,
   VolumeLowIcon,
   VolumeMute02Icon,
+  Camera01Icon,
   Image02Icon,
   Comment01Icon,
   LinkForwardIcon,
   Forward02Icon,
   Share03Icon,
   SmilePlusIcon,
+  // overlays
+  Cancel01Icon,
+  Delete02Icon,
+  Mic01Icon,
+  SmileIcon,
+  StickerIcon,
+  KeyboardIcon,
+  Sent02Icon,
+  Location01Icon,
+  Contact01Icon,
+  PieChartIcon,
+  Link01Icon,
+  MoreHorizontalIcon,
+  Copy01Icon,
+  Attachment01Icon,
+  ArrowUp01Icon,
+  ChevronDownIcon,
 } from "@hugeicons/core-free-icons";
 
 // name -> Hugeicons icon. To add an icon: import it above, add a line here.
@@ -65,6 +83,25 @@ export const libraryIcons = {
   forward: LinkForwardIcon,
   share: Share03Icon,
   addReaction: SmilePlusIcon,
+
+  // overlays: sheet/dialog/menu chrome and keyboard-area panels
+  close: Cancel01Icon,
+  backspace: Delete02Icon,
+  mic: Mic01Icon,
+  smile: SmileIcon,
+  sticker: StickerIcon,
+  keyboard: KeyboardIcon,
+  send: Sent02Icon,
+  location: Location01Icon,
+  contact: Contact01Icon,
+  poll: PieChartIcon,
+  link: Link01Icon,
+  more: MoreHorizontalIcon,
+  copy: Copy01Icon,
+  attach: Attachment01Icon,
+  chevronUp: ArrowUp01Icon,
+  chevronDown: ChevronDownIcon,
+  camera: Camera01Icon,
 };
 
 // Filled icons live in IconFiller.js

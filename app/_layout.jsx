@@ -5,6 +5,7 @@ import {
   SafeAreaProvider,
   initialWindowMetrics,
 } from 'react-native-safe-area-context';
+import OverlayHost from '../src/components/overlays/OverlayHost';
 
 export default function RootLayout() {
   return (
@@ -20,6 +21,7 @@ export default function RootLayout() {
           />
           <Stack.Screen name="user/[id]" />
         </Stack>
+        <OverlayHost />
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
