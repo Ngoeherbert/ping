@@ -3,16 +3,20 @@ import Icon from "../../src/components/Icon";
 import { colors } from "../../src/theme";
 import { haptic } from "../../src/utils/haptics";
 
-const tabIcon =
-  (name, extra = 0) =>
-  ({ color, size, focused }) => (
-    <Icon
-      name={name}
-      size={size + extra}
-      color={color}
-      strokeWidth={focused ? 2 : 1.5}
-    />
-  );
+const tabIcon = (name, extra = 0) => {
+  function TabIcon({ color, size, focused }) {
+    return (
+      <Icon
+        name={name}
+        size={size + extra}
+        color={color}
+        strokeWidth={focused ? 2 : 1.5}
+      />
+    );
+  }
+
+  return TabIcon;
+};
 
 export default function TabsLayout() {
   return (
