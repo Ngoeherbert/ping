@@ -31,7 +31,6 @@ import {
   Delete02Icon,
   Mic01Icon,
   SmileIcon,
-  StickerIcon,
   KeyboardIcon,
   Sent02Icon,
   Location01Icon,
@@ -52,6 +51,8 @@ import {
   AiVideo01Icon,
   PhoneCallIcon,
   CircleDashedIcon,
+  FileEmpty01Icon,
+  LinkBackwardIcon,
 } from "@hugeicons/core-free-icons";
 
 // name -> Hugeicons icon. To add an icon: import it above, add a line here.
@@ -90,13 +91,14 @@ export const libraryIcons = {
   share: Share03Icon,
   addReaction: SmilePlusIcon,
   chats: Comment01Icon,
+  sticker: FileEmpty01Icon,
+  reply: LinkBackwardIcon,
   
   // overlays: sheet/dialog/menu chrome and keyboard-area panels
   close: Cancel01Icon,
-  backspace: Delete02Icon,
+  delete: Delete02Icon,
   mic: Mic01Icon,
   smile: SmileIcon,
-  sticker: StickerIcon,
   keyboard: KeyboardIcon,
   send: Sent02Icon,
   location: Location01Icon,
@@ -108,6 +110,7 @@ export const libraryIcons = {
   attach: Attachment01Icon,
   chevronUp: ArrowUp01Icon,
   chevronDown: ChevronDownIcon,
+
   // chat list chrome and row previews
   pin: PinIcon,
   bellOff: BellOffIcon,
