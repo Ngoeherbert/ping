@@ -35,7 +35,7 @@ const GAME_DISPLAY_NAMES = {
 };
 
 /** One label per system-message event type in the data. */
-const SYSTEM_PREVIEW_LABELS = {
+export const SYSTEM_PREVIEW_LABELS = {
   chat_created: "Chat created",
   member_added: "Member added",
   member_left: "Member left",
@@ -52,7 +52,7 @@ const SYSTEM_PREVIEW_LABELS = {
 };
 
 /** Call statuses that mean the call never connected. */
-const MISSED_CALL_STATUSES = ["missed", "declined", "busy", "failed", "cancelled"];
+export const MISSED_CALL_STATUSES = ["missed", "declined", "busy", "failed", "cancelled"];
 
 /* ---------------------------------- people --------------------------------- */
 
