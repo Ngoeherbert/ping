@@ -13,6 +13,13 @@ export const useChatsStore = create((set, get) => ({
   list: emptyList(),
   /** @type {Record<string, import("../types").Presence>} */
   presenceByUser: {},
+  /**
+   * Newest message per conversation, keyed by conversation id. Populated by
+   * `fetchPreviews` so the list can render previews and timestamps without
+   * loading whole threads into the messages store.
+   * @type {Record<string, import("../types").Message|null>}
+   */
+  previewByConversation: {},
   unreadTotal: 0,
   status: "idle",
   error: null,
@@ -98,7 +105,7 @@ export const useChatsStore = create((set, get) => ({
     set((state) => ({
       byId: {
         ...state.byId,
-        [conversationId]: { ...before, unreadCount: 0 },
+        [conversationId]: { ...before, unreadCount: 0, isMarkedUnread: false },
       },
       unreadTotal: Math.max(0, state.unreadTotal - before.unreadCount),
     }));
@@ -150,11 +157,103 @@ export const useChatsStore = create((set, get) => ({
             lastMessageId: message.id,
             updatedAt: message.createdAt,
             unreadCount: conversation.unreadCount + 1,
+            // A fresh message clears the "marked unread" dot on its own.
+            isMarkedUnread: false,
           },
         },
         unreadTotal: state.unreadTotal + 1,
       };
     }),
+
+  /**
+   * Newest-message previews for the conversation list, fetched in one batched
+   * pass. One `listMessages(id, { limit: 1 })` call per chat runs in parallel
+   * and the results land in a single state update, so the list never flashes
+   * once per row.
+   * @param {string[]} [conversationIds] Defaults to every loaded conversation.
+   */
+  fetchPreviews: async (conversationIds = get().list.items) => {
+    const entries = await Promise.all(
+      conversationIds.map(async (conversationId) => {
+        try {
+          const response = await api.listMessages(conversationId, { limit: 1 });
+          return [conversationId, response.messages[0] ?? null];
+        } catch {
+          // A missing preview only degrades one row; the list still renders.
+          return [conversationId, null];
+        }
+      }),
+    );
+    set((state) => ({
+      previewByConversation: {
+        ...state.previewByConversation,
+        ...Object.fromEntries(entries),
+      },
+    }));
+  },
+
+  /** Pin or unpin a chat. */
+  togglePin: (conversationId) => {
+    const conversation = get().byId[conversationId];
+    if (!conversation) return Promise.resolve(null);
+    return get().updateConversation(conversationId, { isPinned: !conversation.isPinned });
+  },
+
+  /** Mute or unmute a chat. */
+  toggleMute: (conversationId) => {
+    const conversation = get().byId[conversationId];
+    if (!conversation) return Promise.resolve(null);
+    return get().updateConversation(conversationId, { isMuted: !conversation.isMuted });
+  },
+
+  /** Archive a chat, or bring it back when `isArchived` is false. */
+  setArchived: (conversationId, isArchived = true) => {
+    const conversation = get().byId[conversationId];
+    if (!conversation) return Promise.resolve(null);
+    return get().updateConversation(conversationId, { isArchived });
+  },
+
+  /**
+   * Flag a chat as unread without a count. The list shows this as a dot
+   * instead of a badge; `markRead` clears it again.
+   */
+  markUnread: (conversationId) => {
+    const conversation = get().byId[conversationId];
+    if (!conversation) return Promise.resolve(null);
+    return get().updateConversation(conversationId, { isMarkedUnread: true });
+  },
+
+  /**
+   * Delete a chat. The row disappears immediately and comes back if the
+   * server refuses, so the list can never drift from the API silently.
+   * @returns {Promise<boolean>} Whether the delete went through.
+   */
+  deleteConversation: async (conversationId) => {
+    const before = get().byId[conversationId];
+    if (!before) return false;
+
+    set((state) => {
+      const { [conversationId]: _removed, ...byId } = state.byId;
+      return {
+        list: { ...state.list, items: state.list.items.filter((id) => id !== conversationId) },
+        byId,
+        unreadTotal: Math.max(0, state.unreadTotal - before.unreadCount),
+      };
+    });
+
+    try {
+      await api.deleteConversation(conversationId);
+      return true;
+    } catch (error) {
+      set((state) => ({
+        list: { ...state.list, items: appendIds(state.list.items, [conversationId]) },
+        byId: { ...state.byId, [conversationId]: before },
+        unreadTotal: state.unreadTotal + before.unreadCount,
+        error: toErrorBody(error),
+      }));
+      return false;
+    }
+  },
 }));
 
 /* -------------------------------- selectors -------------------------------- */
@@ -195,3 +294,7 @@ export const selectTypingUserIds = (conversationId) => (state) => {
 };
 
 export const selectChatsStatus = (state) => slice(state).list.status;
+
+/** The newest-message preview for one chat, once `fetchPreviews` has run. */
+export const selectPreview = (conversationId) => (state) =>
+  slice(state).previewByConversation[conversationId] ?? null;

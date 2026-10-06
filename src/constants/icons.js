@@ -1,8 +1,7 @@
 import {
   Home05Icon,
   PlayListIcon,
-  AddCircleIcon,
-  Comment02Icon,
+  Add01Icon,
   User02Icon,
   ArrowLeft01Icon,
   SearchIcon,
@@ -44,6 +43,15 @@ import {
   Attachment01Icon,
   ArrowUp01Icon,
   ChevronDownIcon,
+  // chat list
+  PinIcon,
+  BellOffIcon,
+  Archive01Icon,
+  TrashIcon,
+  CommentAdd01Icon,
+  AiVideo01Icon,
+  PhoneCallIcon,
+  CircleDashedIcon,
 } from "@hugeicons/core-free-icons";
 
 // name -> Hugeicons icon. To add an icon: import it above, add a line here.
@@ -59,18 +67,16 @@ export const libraryIcons = {
 
   // tab icon
   home: Home05Icon,
-  create: AddCircleIcon,
+  create: Add01Icon,
   reel: PlayListIcon,
 
   // message
-  chats: Comment02Icon,
   audio: AudioLinesIcon,
   check: CheckIcon,
   checkDouble: CheckCheckIcon,
-
+  
   // post
   repost: ArrowReloadHorizontalIcon,
-  comment: Comment01Icon,
 
   // re-usable
   notifications: BellIcon,
@@ -83,7 +89,8 @@ export const libraryIcons = {
   forward: LinkForwardIcon,
   share: Share03Icon,
   addReaction: SmilePlusIcon,
-
+  chats: Comment01Icon,
+  
   // overlays: sheet/dialog/menu chrome and keyboard-area panels
   close: Cancel01Icon,
   backspace: Delete02Icon,
@@ -101,6 +108,15 @@ export const libraryIcons = {
   attach: Attachment01Icon,
   chevronUp: ArrowUp01Icon,
   chevronDown: ChevronDownIcon,
+  // chat list chrome and row previews
+  pin: PinIcon,
+  bellOff: BellOffIcon,
+  archive: Archive01Icon,
+  trash: TrashIcon,
+  compose: CommentAdd01Icon,
+  video: AiVideo01Icon,
+  phone: PhoneCallIcon,
+  viewOnce: CircleDashedIcon,
   camera: Camera01Icon,
 };
 

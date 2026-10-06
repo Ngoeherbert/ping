@@ -153,7 +153,25 @@ export function markConversationRead(conversationId) {
     const conversation = findConversation(conversationId);
     if (!conversation) throw notFound("That conversation no longer exists");
     conversation.unreadCount = 0;
+    // Reading a chat also clears the "marked unread" dot.
+    conversation.isMarkedUnread = false;
     return conversation;
+  });
+}
+
+/**
+ * Delete a conversation for the viewer, along with its messages.
+ * @param {string} conversationId
+ * @returns {Promise<{ id: string, deleted: boolean }>}
+ */
+export function deleteConversation(conversationId) {
+  return run(() => {
+    const db = getDb();
+    const index = db.conversations.findIndex((c) => c.id === conversationId);
+    if (index === -1) throw notFound("That conversation no longer exists");
+    db.conversations.splice(index, 1);
+    db.messages = db.messages.filter((m) => m.conversationId !== conversationId);
+    return { id: conversationId, deleted: true };
   });
 }
 
@@ -165,6 +183,8 @@ export function updateConversation(conversationId, changes = {}) {
 
     if (changes.isPinned !== undefined) conversation.isPinned = !!changes.isPinned;
     if (changes.isMuted !== undefined) conversation.isMuted = !!changes.isMuted;
+    if (changes.isArchived !== undefined) conversation.isArchived = !!changes.isArchived;
+    if (changes.isMarkedUnread !== undefined) conversation.isMarkedUnread = !!changes.isMarkedUnread;
     if (changes.title !== undefined && conversation.kind === "group") {
       conversation.title = changes.title;
     }
