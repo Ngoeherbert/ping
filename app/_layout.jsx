@@ -1,28 +1,18 @@
-import { Stack } from 'expo-router';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StatusBar } from 'expo-status-bar';
-import {
-  SafeAreaProvider,
-  initialWindowMetrics,
-} from 'react-native-safe-area-context';
-import OverlayHost from '../src/components/overlays/OverlayHost';
+// app/(tabs)/_layout.jsx
+import { Tabs } from "expo-router";
+import { CustomTabBar } from "../src/components/ui/CustomTabBar";
 
-export default function RootLayout() {
+export default function TabsLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-        <StatusBar style="dark" />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen
-            name="(modals)"
-            options={{ presentation: 'fullScreenModal' }}
-          />
-          <Stack.Screen name="user/[id]" />
-        </Stack>
-        <OverlayHost />
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <Tabs
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
+    >
+      <Tabs.Screen name="chats" options={{ title: "Chats" }} />
+      <Tabs.Screen name="feed" options={{ title: "Feed" }} />
+      <Tabs.Screen name="create" options={{ title: "Create" }} />
+      <Tabs.Screen name="reels" options={{ title: "Reels" }} />
+      <Tabs.Screen name="profile" options={{ title: "Profile" }} />
+    </Tabs>
   );
 }

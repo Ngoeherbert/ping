@@ -1,34 +1,62 @@
+// components/Icon.jsx
 import { HugeiconsIcon } from "@hugeicons/react-native";
-import { colors } from "../theme";
-import IconFiller from "../constants/iconFiller";
-import { libraryIcons, filledIconNames } from "../constants/icons";
+import {
+  Message01Icon,
+  Home01Icon,
+  AddCircleIcon,
+  PlayCircleIcon,
+  UserIcon,
+  Search01Icon,
+  Notification01Icon,
+  Camera01Icon,
+  FavouriteIcon,
+  Comment01Icon,
+  SentIcon,
+  Settings01Icon,
+  ArrowLeft01Icon,
+  MoreVerticalIcon,
+} from "@hugeicons/core-free-icons";
 
-const FILLED = new Set(filledIconNames);
+// One place to map your app's icon names to HugeIcons assets.
+const ICONS = {
+  chats: Message01Icon,
+  feed: Home01Icon,
+  create: AddCircleIcon,
+  reels: PlayCircleIcon,
+  profile: UserIcon,
+  search: Search01Icon,
+  notifications: Notification01Icon,
+  camera: Camera01Icon,
+  like: FavouriteIcon,
+  comment: Comment01Icon,
+  send: SentIcon,
+  settings: Settings01Icon,
+  back: ArrowLeft01Icon,
+  more: MoreVerticalIcon,
+};
 
-export default function Icon({
-  icon,
+export function Icon({
   name,
   size = 24,
-  color = colors.text,
-  strokeWidth = 1.5,
+  color = "#111111",
+  active = false,
+  strokeWidth,
   ...rest
 }) {
-  // Filled icons: heart, bookmark, verified
-  if (name && FILLED.has(name)) {
-    return <IconFiller name={name} size={size} color={color} {...rest} />;
-  }
+  const icon = ICONS[name];
 
-  // Named icons from the library registry, or an icon passed directly
-  const resolved = name ? libraryIcons[name] : undefined;
-  const data = resolved ?? icon;
-  if (!data) return null;
+  if (!icon) {
+    if (__DEV__) console.warn(`Icon "${name}" is not registered in components/Icon.jsx`);
+    return null;
+  }
 
   return (
     <HugeiconsIcon
-      icon={data}
+      icon={icon}
       size={size}
       color={color}
-      strokeWidth={strokeWidth}
+      // The free pack is stroke-only, so "active" is shown with a heavier stroke
+      strokeWidth={strokeWidth ?? (active ? 2.2 : 1.5)}
       {...rest}
     />
   );
