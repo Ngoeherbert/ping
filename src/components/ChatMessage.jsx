@@ -46,6 +46,9 @@ export default function ChatMessage({ message }) {
           opened={message.opened}
           isMine={isMine}
           showTail={showTail}
+          time={message.time}
+          // "sent" | "delivered" | "read" — map from your own field if it differs
+          status={message.status}
         />
       );
     case "photos":

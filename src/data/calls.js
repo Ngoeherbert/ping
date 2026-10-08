@@ -1,0 +1,78 @@
+// Sample call history for the Calls tab.
+const face = (n) => `https://i.pravatar.cc/150?img=${n}`;
+
+export const RECENT_CALLS = [
+  {
+    id: "1",
+    name: "Wade Warren",
+    avatar: face(47),
+    type: "incoming", // incoming | outgoing | missed
+    time: "Today, 10:32 AM",
+    duration: "12m 34s",
+    video: false,
+  },
+  {
+    id: "2",
+    name: "Esther Howard",
+    avatar: face(32),
+    type: "outgoing",
+    time: "Today, 9:15 AM",
+    duration: "4m 12s",
+    video: true,
+  },
+  {
+    id: "3",
+    name: "Jenny Wilson",
+    avatar: face(5),
+    type: "missed",
+    time: "Yesterday, 7:48 PM",
+    duration: "7m 22s",
+    video: false,
+  },
+  {
+    id: "4",
+    name: "Guy Hawkins",
+    avatar: face(12),
+    type: "incoming",
+    time: "Yesterday, 6:20 PM",
+    duration: "22m 11s",
+    video: true,
+  },
+  {
+    id: "5",
+    name: "Kristin Watson",
+    avatar: face(25),
+    type: "missed",
+    time: "Yesterday, 4:55 PM",
+    duration: "1m 44s",
+    video: false,
+  },
+  {
+    id: "6",
+    name: "Ronald Richards",
+    avatar: face(38),
+    type: "outgoing",
+    time: "Mon, 8:30 PM",
+    duration: "6m 03s",
+    video: false,
+  },
+  {
+    id: "7",
+    name: "Annette Black",
+    avatar: face(44),
+    type: "incoming",
+    time: "Mon, 5:12 PM",
+    duration: "15m 41s",
+    video: true,
+  },
+  {
+    id: "8",
+    name: "Visit Denpasar",
+    avatar: `https://picsum.photos/seed/denpasar-trip/200/200`,
+    type: "group",
+    time: "Mon, 3:00 PM",
+    duration: "32m 18s",
+    video: true,
+    members: 7,
+  },
+];

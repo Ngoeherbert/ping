@@ -52,9 +52,6 @@ export default function ChatHeader({ conversation, onGlass = false }) {
         <Pressable hitSlop={8} accessibilityRole="button" accessibilityLabel="Voice call">
           <PhoneIcon color={action} size={22} />
         </Pressable>
-        <Pressable hitSlop={8} accessibilityRole="button" accessibilityLabel="More options">
-          <MoreVerticalGlyph color={action} size={22} />
-        </Pressable>
       </GlassSurface>
     </View>
   );
