@@ -33,7 +33,14 @@
         }
       ],
       "expo-video",
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Ping to access your photos so you can share images and videos in chats.",
+          "cameraPermission": "Allow Ping to use the camera to capture photos and videos for chats."
+        }
+      ]
     ]
   }
 }
