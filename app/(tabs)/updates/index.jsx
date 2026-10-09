@@ -12,6 +12,8 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { useEvent } from "expo";
+import { useVideoPlayer, VideoView } from "expo-video";
 import { useTheme } from "../../../src/theme/useTheme";
 import Avatar from "../../../src/components/Avatar";
 import GlassButton from "../../../src/components/GlassButton";
@@ -20,7 +22,13 @@ import { STORIES, UPDATES } from "../../../src/data/updates";
 
 // Brand colors
 const STORY_BLUE = "#1E88FF";
-const LIKE_PINK = "#E8416B";
+const LIKE_PINK = "#F0457A";
+const RING_PINK = "#F27BA5";
+
+// Header buttons
+const HEADER_BTN = 38;
+const UNREAD_NOTIFICATIONS = 3; // swap for real state; 0 hides the red dot
+const BELL_RED = "#FF3B30";
 
 // Story card dimensions
 const CARD_W = 120;
@@ -29,13 +37,17 @@ const CARD_RADIUS = 18;
 const CARD_AVATAR = 28;
 
 // Feed post
-const POST_AVATAR = 44;
-const POST_RADIUS = 24;
-const MEDIA_RADIUS = 20;
-const COLLAB_AVATAR = 30;
-const SEE_MORE_AFTER = 90; // characters before we offer "see more"
+const POST_AVATAR = 46;
+const POST_RADIUS = 28;
+const MEDIA_RADIUS = 24;
+const COLLAB_AVATAR = 28;
+const COLLAB_RING = 36;
+const TRUNCATE_AT = 66; // characters shown before "… see more"
+const PHOTO_ASPECT = 1; // photo posts are square
+const VIDEO_ASPECT = 1.5; // video posts are landscape
 
 const MUTED_LINE = "rgba(128,128,128,0.25)";
+const PILL_BG = "rgba(40,40,40,0.62)";
 
 /* ---------- Helpers ---------- */
 
@@ -50,9 +62,11 @@ function splitText(text = "", tags) {
   return { body, tags: found };
 }
 
+// 120 -> "120+", 1500 -> "1.5K"
 function formatCount(n = 0) {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(".0", "")}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(".0", "")}K`;
+  if (n >= 100) return `${n}+`;
   return String(n);
 }
 
@@ -84,17 +98,47 @@ function PlusGlyph({ color, size = 20 }) {
   );
 }
 
+function BellGlyph({ color }) {
+  return (
+    <View style={styles.bellWrap}>
+      <View style={[styles.bellKnob, { backgroundColor: color }]} />
+      <View style={[styles.bellBody, { borderColor: color }]} />
+      <View style={[styles.bellClapper, { backgroundColor: color }]} />
+    </View>
+  );
+}
+
+// Small globe shown next to the post time
+function GlobeGlyph({ color }) {
+  return (
+    <View style={[styles.globe, { borderColor: color }]}>
+      <View style={[styles.globeMeridian, { borderColor: color }]} />
+      <View style={[styles.globeEquator, { backgroundColor: color }]} />
+    </View>
+  );
+}
+
+// Speaker for the video pill; shows a slash when muted
+function SpeakerGlyph({ muted }) {
+  return (
+    <View style={styles.speaker}>
+      <View style={styles.speakerBody} />
+      <View style={styles.speakerCone} />
+      {muted ? (
+        <Text style={styles.speakerMute}>×</Text>
+      ) : (
+        <View style={styles.speakerWave} />
+      )}
+    </View>
+  );
+}
+
 function CommentGlyph({ color }) {
   return (
-    <View
-      style={{
-        width: 19,
-        height: 17,
-        borderRadius: 9,
-        borderWidth: 1.8,
-        borderColor: color,
-      }}
-    />
+    <View style={styles.commentWrap}>
+      <View style={[styles.commentBubble, { borderColor: color }]} />
+      <View style={[styles.commentTail, { borderColor: color }]} />
+    </View>
   );
 }
 
@@ -111,14 +155,84 @@ function BookmarkGlyph({ color, filled }) {
   return (
     <View
       style={{
-        width: 14,
-        height: 19,
+        width: 15,
+        height: 20,
         borderWidth: 1.8,
         borderColor: color,
         borderRadius: 3,
         backgroundColor: filled ? color : "transparent",
       }}
     />
+  );
+}
+
+/* ---------- Video ---------- */
+
+// Autoplays muted on a loop. Tap the video to pause / resume, tap the pill to
+// mute / unmute.
+function VideoMedia({ uri, aspect, duration }) {
+  const player = useVideoPlayer(uri, (p) => {
+    p.loop = true;
+    p.muted = true;
+    p.play();
+  });
+  const { isPlaying } = useEvent(player, "playingChange", {
+    isPlaying: player.playing,
+  });
+  const { muted } = useEvent(player, "mutedChange", { muted: player.muted });
+
+  return (
+    <View style={[styles.mediaBox, { aspectRatio: aspect }]}>
+      <VideoView
+        player={player}
+        style={StyleSheet.absoluteFill}
+        contentFit="cover"
+        nativeControls={false}
+      />
+
+      <Pressable
+        onPress={() => (isPlaying ? player.pause() : player.play())}
+        accessibilityRole="button"
+        accessibilityLabel={isPlaying ? "Pause video" : "Play video"}
+        style={styles.videoTap}
+      >
+        {!isPlaying && (
+          <View style={styles.playCircle}>
+            <Text style={styles.playGlyph}>▶</Text>
+          </View>
+        )}
+      </Pressable>
+
+      <SoundPill
+        muted={muted}
+        duration={duration}
+        onPress={() => {
+          player.muted = !player.muted;
+        }}
+      />
+    </View>
+  );
+}
+
+function SoundPill({ muted, duration, onPress }) {
+  const content = (
+    <>
+      <SpeakerGlyph muted={muted} />
+      {duration ? <Text style={styles.pillText}>{duration}</Text> : null}
+    </>
+  );
+  return onPress ? (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={muted ? "Unmute" : "Mute"}
+      hitSlop={8}
+      style={styles.pill}
+    >
+      {content}
+    </Pressable>
+  ) : (
+    <View style={styles.pill}>{content}</View>
   );
 }
 
@@ -193,16 +307,103 @@ function StoryCard({ item, colors }) {
   );
 }
 
-/* ---------- Feed ---------- */
+/* ---------- Feed post cards ---------- */
 
-// Reads these optional fields from each UPDATES item (all have fallbacks):
+// Photo post:  verified badge on the avatar + "Follow" button (set `verified`).
+// Video post:  two collaborator avatars instead of Follow (set `collaborators`),
+//              autoplaying muted video (`video`) with the sound / duration pill.
+//              With only `image` + `videoDuration` it shows a still poster.
+//
+// Fields read from each UPDATES item (all have fallbacks):
 //   name, avatar, verified, time
 //   text (falls back to preview) - "#tags" inside it are styled automatically
 //   tags[]                       - optional explicit tags
-//   image (falls back to cover), aspect (width / height, default 1)
-//   videoDuration                - e.g. "0:32", shows the sound pill on the media
-//   collaborators[]              - [{ id, avatar, name }] shown instead of Follow
+//   image (falls back to cover)  - photo / poster
+//   video                        - video uri
+//   videoDuration                - e.g. "0:32"
+//   aspect                       - width / height (default 1 photo, 1.5 video)
+//   collaborators[]              - [{ id, avatar, name }]
 //   likes, comments, liked, saved, following
+function PostHeader({ item, colors, following, onToggleFollow }) {
+  const collaborators = item.collaborators ?? [];
+
+  return (
+    <View style={styles.postHeader}>
+      <Avatar
+        uri={item.avatar}
+        name={item.name}
+        size={POST_AVATAR}
+        online={false}
+      />
+
+      <View style={styles.postMeta}>
+        <View style={styles.nameRow}>
+          <Text
+            style={[styles.postName, { color: colors.text, flexShrink: 1 }]}
+            numberOfLines={1}
+          >
+            {item.name}
+          </Text>
+          {item.verified && (
+            <View style={styles.verifiedBadge}>
+              <Text style={styles.verifiedTick}>✓</Text>
+            </View>
+          )}
+        </View>
+        <View style={styles.timeRow}>
+          <Text style={[styles.postTime, { color: colors.textMuted }]}>
+            {item.time}
+          </Text>
+          <View style={[styles.timeDivider, { backgroundColor: MUTED_LINE }]} />
+          <GlobeGlyph color={colors.textMuted} />
+        </View>
+      </View>
+
+      {collaborators.length > 0 ? (
+        <View style={styles.collabs}>
+          {collaborators.slice(0, 2).map((c, i) => (
+            <View
+              key={c.id ?? i}
+              style={[
+                styles.collabRing,
+                { backgroundColor: colors.surface },
+                i > 0 && { marginLeft: -4 },
+              ]}
+            >
+              <Avatar
+                uri={c.avatar}
+                name={c.name}
+                size={COLLAB_AVATAR}
+                online={false}
+              />
+            </View>
+          ))}
+        </View>
+      ) : (
+        <Pressable
+          onPress={onToggleFollow}
+          accessibilityRole="button"
+          accessibilityLabel={following ? "Unfollow" : "Follow"}
+          style={[styles.followBtn, { borderColor: MUTED_LINE }]}
+        >
+          <Text style={[styles.followText, { color: colors.text }]}>
+            {following ? "Following" : "Follow"}
+          </Text>
+        </Pressable>
+      )}
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="More options"
+        hitSlop={10}
+        style={styles.moreBtn}
+      >
+        <Text style={[styles.moreText, { color: colors.text }]}>···</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 function PostCard({ item, colors }) {
   const [liked, setLiked] = useState(!!item.liked);
   const [saved, setSaved] = useState(!!item.saved);
@@ -210,102 +411,34 @@ function PostCard({ item, colors }) {
   const [expanded, setExpanded] = useState(false);
 
   const { body, tags } = splitText(item.text ?? item.preview ?? "", item.tags);
-  const canExpand = body.length > SEE_MORE_AFTER;
-  const media = item.image ?? item.cover;
+  const isVideo = !!item.video || !!item.videoDuration;
+  const image = item.image ?? item.cover;
+  const aspect = item.aspect ?? (isVideo ? VIDEO_ASPECT : PHOTO_ASPECT);
   const baseLikes = (item.likes ?? 0) - (item.liked ? 1 : 0);
   const likeCount = baseLikes + (liked ? 1 : 0);
-  const collaborators = item.collaborators ?? [];
 
-  const toggleLike = () => setLiked((v) => !v);
+  const isCut = body.length > TRUNCATE_AT && !expanded;
+  const shownBody = isCut ? `${body.slice(0, TRUNCATE_AT).trimEnd()}…` : body;
 
   return (
     <View style={[styles.post, { backgroundColor: colors.surface }]}>
-      {/* Header */}
-      <View style={styles.postHeader}>
-        <View>
-          <Avatar
-            uri={item.avatar}
-            name={item.name}
-            size={POST_AVATAR}
-            online={false}
-          />
-          {item.verified && (
-            <View
-              style={[styles.verifiedBadge, { borderColor: colors.surface }]}
-            >
-              <Text style={styles.verifiedTick}>✓</Text>
-            </View>
-          )}
-        </View>
+      <PostHeader
+        item={item}
+        colors={colors}
+        following={following}
+        onToggleFollow={() => setFollowing((v) => !v)}
+      />
 
-        <View style={styles.postMeta}>
-          <Text
-            style={[styles.postName, { color: colors.text }]}
-            numberOfLines={1}
-          >
-            {item.name}
-          </Text>
-          <Text style={[styles.postTime, { color: colors.textMuted }]}>
-            {item.time}
-          </Text>
-        </View>
-
-        {collaborators.length > 0 ? (
-          <View style={styles.collabs}>
-            {collaborators.slice(0, 2).map((c, i) => (
-              <View
-                key={c.id ?? i}
-                style={[
-                  styles.collab,
-                  { borderColor: colors.surface },
-                  i > 0 && { marginLeft: -8 },
-                ]}
-              >
-                <Avatar
-                  uri={c.avatar}
-                  name={c.name}
-                  size={COLLAB_AVATAR}
-                  online={false}
-                />
-              </View>
-            ))}
-          </View>
-        ) : (
-          <Pressable
-            onPress={() => setFollowing((v) => !v)}
-            accessibilityRole="button"
-            accessibilityLabel={following ? "Unfollow" : "Follow"}
-            style={[styles.followBtn, { borderColor: MUTED_LINE }]}
-          >
-            <Text style={[styles.followText, { color: colors.text }]}>
-              {following ? "Following" : "Follow"}
-            </Text>
-          </Pressable>
-        )}
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="More options"
-          hitSlop={10}
-          style={styles.moreBtn}
-        >
-          <Text style={[styles.moreText, { color: colors.text }]}>···</Text>
-        </Pressable>
-      </View>
-
-      {/* Text */}
+      {/* Text: "man, an… see more" */}
       {body ? (
-        <Text
-          style={[styles.postBody, { color: colors.text }]}
-          numberOfLines={expanded ? undefined : 2}
-        >
-          {body}
-          {canExpand && !expanded ? (
+        <Text style={[styles.postBody, { color: colors.text }]}>
+          {shownBody}
+          {isCut ? (
             <Text
               onPress={() => setExpanded(true)}
               style={{ color: colors.textMuted }}
             >
-              {"  see more"}
+              {" see more"}
             </Text>
           ) : null}
         </Text>
@@ -314,31 +447,39 @@ function PostCard({ item, colors }) {
       {tags.length > 0 && <Text style={styles.tags}>{tags.join(" ")}</Text>}
 
       {/* Media */}
-      {media ? (
+      {item.video ? (
         <View style={styles.mediaWrap}>
-          <Image
-            source={{ uri: media }}
-            style={[
-              styles.media,
-              {
-                aspectRatio: item.aspect ?? 1,
-                backgroundColor: colors.background,
-              },
-            ]}
-            resizeMode="cover"
+          <VideoMedia
+            uri={item.video}
+            aspect={aspect}
+            duration={item.videoDuration}
           />
-          {item.videoDuration ? (
-            <View style={styles.videoPill}>
-              <Text style={styles.videoPillText}>🔊 {item.videoDuration}</Text>
-            </View>
-          ) : null}
+        </View>
+      ) : image ? (
+        <View style={styles.mediaWrap}>
+          <View style={[styles.mediaBox, { aspectRatio: aspect }]}>
+            <Image
+              source={{ uri: image }}
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: colors.background },
+              ]}
+              resizeMode="cover"
+            />
+            {isVideo ? <SoundPill muted={false} duration={item.videoDuration} /> : null}
+          </View>
         </View>
       ) : null}
 
       {/* Actions */}
-      <View style={[styles.actions, { borderTopColor: MUTED_LINE }]}>
+      <View
+        style={[
+          styles.actions,
+          { borderTopColor: MUTED_LINE, borderBottomColor: MUTED_LINE },
+        ]}
+      >
         <Pressable
-          onPress={toggleLike}
+          onPress={() => setLiked((v) => !v)}
           accessibilityRole="button"
           accessibilityLabel={liked ? "Unlike" : "Like"}
           hitSlop={8}
@@ -354,7 +495,9 @@ function PostCard({ item, colors }) {
           </Text>
           <Text style={[styles.actionCount, { color: colors.text }]}>
             {formatCount(likeCount)}
-            <Text style={{ color: colors.textMuted }}> Likes</Text>
+            <Text style={[styles.actionLabel, { color: colors.textMuted }]}>
+              {" Likes"}
+            </Text>
           </Text>
         </Pressable>
 
@@ -362,12 +505,14 @@ function PostCard({ item, colors }) {
           accessibilityRole="button"
           accessibilityLabel="Comments"
           hitSlop={8}
-          style={[styles.action, { marginLeft: 18 }]}
+          style={[styles.action, { marginLeft: 20 }]}
         >
           <CommentGlyph color={colors.text} />
           <Text style={[styles.actionCount, { color: colors.text }]}>
             {formatCount(item.comments ?? 0)}
-            <Text style={{ color: colors.textMuted }}> Comments</Text>
+            <Text style={[styles.actionLabel, { color: colors.textMuted }]}>
+              {" Comments"}
+            </Text>
           </Text>
         </Pressable>
 
@@ -447,11 +592,30 @@ export default function UpdatesScreen() {
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>Updates</Text>
         <View style={styles.headerActions}>
-          <GlassButton size={44} label="Search updates">
-            <SearchIcon color={colors.text} size={22} />
+          <View>
+            <GlassButton
+              size={HEADER_BTN}
+              label={
+                UNREAD_NOTIFICATIONS > 0
+                  ? `Notifications, ${UNREAD_NOTIFICATIONS} unread`
+                  : "Notifications"
+              }
+              // onPress={() => router.push("/notifications")}
+            >
+              <BellGlyph color={colors.text} />
+            </GlassButton>
+            {UNREAD_NOTIFICATIONS > 0 && (
+              <View
+                pointerEvents="none"
+                style={[styles.bellDot, { borderColor: colors.background }]}
+              />
+            )}
+          </View>
+          <GlassButton size={HEADER_BTN} label="Search updates">
+            <SearchIcon color={colors.text} size={19} />
           </GlassButton>
-          <GlassButton size={44} label="Add status">
-            <PlusGlyph color={colors.text} size={20} />
+          <GlassButton size={HEADER_BTN} label="Add status">
+            <PlusGlyph color={colors.text} size={17} />
           </GlassButton>
         </View>
       </View>
@@ -481,7 +645,37 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   title: { fontSize: 26, fontWeight: "700" },
-  headerActions: { flexDirection: "row", gap: 10 },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 8 },
+
+  // notification bell
+  bellWrap: { width: 18, height: 20, alignItems: "center" },
+  bellKnob: { width: 3, height: 2.5, borderRadius: 1.5 },
+  bellBody: {
+    width: 15,
+    height: 13,
+    borderWidth: 1.8,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    borderBottomLeftRadius: 2,
+    borderBottomRightRadius: 2,
+  },
+  bellClapper: {
+    width: 6,
+    height: 3,
+    marginTop: 1.5,
+    borderBottomLeftRadius: 3,
+    borderBottomRightRadius: 3,
+  },
+  bellDot: {
+    position: "absolute",
+    top: 1,
+    right: 1,
+    width: 11,
+    height: 11,
+    borderRadius: 6,
+    borderWidth: 2,
+    backgroundColor: BELL_RED,
+  },
 
   // plus glyph
   plusBar: { height: 2.2, borderRadius: 1.5 },
@@ -564,48 +758,74 @@ const styles = StyleSheet.create({
   post: {
     marginHorizontal: 12,
     marginBottom: 14,
-    padding: 12,
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 6,
     borderRadius: POST_RADIUS,
   },
   postHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    marginBottom: 12,
+    marginBottom: 14,
   },
-  postMeta: { flex: 1, gap: 1 },
-  postName: { fontSize: 16, fontWeight: "700" },
+  postMeta: { flex: 1, gap: 2 },
+  postName: { fontSize: 16.5, fontWeight: "600" },
+  timeRow: { flexDirection: "row", alignItems: "center", gap: 7 },
   postTime: { fontSize: 12.5 },
-  verifiedBadge: {
+  timeDivider: { width: StyleSheet.hairlineWidth * 2, height: 12 },
+
+  globe: {
+    width: 13,
+    height: 13,
+    borderRadius: 7,
+    borderWidth: 1.2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  globeMeridian: {
     position: "absolute",
-    right: -2,
-    top: -2,
-    width: 17,
-    height: 17,
-    borderRadius: 9,
-    borderWidth: 2,
+    width: 5,
+    height: 11,
+    borderRadius: 3,
+    borderWidth: 1.1,
+  },
+  globeEquator: { position: "absolute", width: 11, height: 1.1 },
+
+  nameRow: { flexDirection: "row", alignItems: "center", gap: 5 },
+  verifiedBadge: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: STORY_BLUE,
     alignItems: "center",
     justifyContent: "center",
   },
   verifiedTick: {
     color: "#fff",
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: "800",
-    lineHeight: 11,
+    lineHeight: 12,
   },
   followBtn: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 15,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 17,
     borderWidth: 1,
   },
   followText: { fontSize: 13, fontWeight: "500" },
+
   collabs: { flexDirection: "row", alignItems: "center" },
-  collab: {
+  collabRing: {
+    width: COLLAB_RING,
+    height: COLLAB_RING,
+    borderRadius: COLLAB_RING / 2,
     borderWidth: 2,
-    borderRadius: (COLLAB_AVATAR + 4) / 2,
+    borderColor: RING_PINK,
+    alignItems: "center",
+    justifyContent: "center",
   },
+
   moreBtn: { paddingHorizontal: 2 },
   moreText: { fontSize: 20, fontWeight: "700", letterSpacing: 1 },
 
@@ -613,43 +833,117 @@ const styles = StyleSheet.create({
   tags: {
     color: STORY_BLUE,
     fontSize: 13.5,
-    marginTop: 8,
+    marginTop: 12,
   },
+
+  // media
   mediaWrap: { marginTop: 12 },
-  media: {
+  mediaBox: {
     width: "100%",
     borderRadius: MEDIA_RADIUS,
+    overflow: "hidden",
+    backgroundColor: "#000",
   },
-  videoPill: {
+  videoTap: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  playCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  playGlyph: { color: "#fff", fontSize: 22, marginLeft: 3 },
+
+  // sound / duration pill
+  pill: {
     position: "absolute",
-    top: 12,
-    right: 12,
-    backgroundColor: "rgba(0,0,0,0.55)",
+    top: 14,
+    right: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    backgroundColor: PILL_BG,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 16,
+    borderRadius: 18,
   },
-  videoPillText: { color: "#fff", fontSize: 13, fontWeight: "500" },
+  pillText: { color: "#fff", fontSize: 14, fontWeight: "500" },
+  speaker: { width: 20, height: 16, flexDirection: "row", alignItems: "center" },
+  speakerBody: { width: 4, height: 7, backgroundColor: "#fff" },
+  speakerCone: {
+    width: 0,
+    height: 0,
+    borderTopWidth: 6,
+    borderBottomWidth: 6,
+    borderRightWidth: 7,
+    borderTopColor: "transparent",
+    borderBottomColor: "transparent",
+    borderRightColor: "#fff",
+    transform: [{ rotate: "180deg" }],
+  },
+  speakerWave: {
+    width: 6,
+    height: 12,
+    marginLeft: 1,
+    borderWidth: 1.6,
+    borderLeftWidth: 0,
+    borderColor: "#fff",
+    borderTopRightRadius: 6,
+    borderBottomRightRadius: 6,
+  },
+  speakerMute: {
+    color: "#fff",
+    fontSize: 16,
+    lineHeight: 16,
+    marginLeft: 2,
+  },
 
+  // actions
   actions: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 14,
-    paddingTop: 12,
+    marginTop: 16,
+    paddingVertical: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  action: { flexDirection: "row", alignItems: "center", gap: 6 },
-  heart: { fontSize: 22, lineHeight: 24 },
-  actionCount: { fontSize: 14, fontWeight: "600" },
-  iconBtn: { marginLeft: 18 },
+  action: { flexDirection: "row", alignItems: "center", gap: 7 },
+  heart: { fontSize: 23, lineHeight: 25 },
+  actionCount: { fontSize: 14, fontWeight: "700" },
+  actionLabel: { fontWeight: "400" },
+  iconBtn: { marginLeft: 20 },
 
-  shareWrap: { width: 20, height: 20, alignItems: "center" },
+  commentWrap: { width: 20, height: 20 },
+  commentBubble: {
+    width: 19,
+    height: 19,
+    borderRadius: 10,
+    borderWidth: 1.8,
+  },
+  commentTail: {
+    position: "absolute",
+    left: 1,
+    bottom: 0,
+    width: 7,
+    height: 7,
+    borderLeftWidth: 1.8,
+    borderBottomWidth: 1.8,
+    borderBottomLeftRadius: 2,
+    backgroundColor: "transparent",
+  },
+
+  shareWrap: { width: 20, height: 22, alignItems: "center" },
   shareArrow: { fontSize: 13, lineHeight: 14, fontWeight: "700" },
   shareBox: {
     position: "absolute",
     bottom: 1,
-    width: 17,
-    height: 10,
+    width: 18,
+    height: 12,
     borderWidth: 1.8,
     borderTopWidth: 0,
     borderBottomLeftRadius: 4,
