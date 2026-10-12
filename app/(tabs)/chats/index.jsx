@@ -18,6 +18,10 @@ import {
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import ReanimatedSwipeable from "react-native-gesture-handler/ReanimatedSwipeable";
+import {
+  GestureHandlerRootView,
+  ScrollView as GHScrollView,
+} from "react-native-gesture-handler";
 import Animated, {
   Extrapolation,
   interpolate,
@@ -28,11 +32,16 @@ import Animated, {
 import { useTheme } from "../../../src/theme/useTheme";
 import Avatar from "../../../src/components/Avatar";
 import GlassButton from "../../../src/components/GlassButton";
+import GlassSurface from "../../../src/components/GlassSurface";
+import Icon from "../../../src/components/icons";
+import ChatMessage from "../../../src/components/ChatMessage";
+import ChatBackground from "../../../src/components/ChatBackground";
+import { BubbleStyleProvider } from "../../../src/components/BubbleShell";
 import {
-  BackIcon,
-  SearchIcon,
-  addChat as AddChatIcon,
-} from "../../../src/components/Icons";
+  glassBubbles,
+  glassColors,
+  DEFAULT_WALLPAPER,
+} from "../../../src/theme/chatTheme";
 import { CONVERSATIONS } from "../../../src/data/chats";
 import { messagePreview } from "../../../src/utils/messagePreview";
 
@@ -41,14 +50,32 @@ const MAX_PINS = 3;
 // Swipe action colors (iMessage style)
 const ACTION_BLUE = "#0A84FF";
 const ACTION_GRAY = "#8E8E93";
+const ACTION_ORANGE = "#FF9F0A";
 const ACTION_RED = "#FF3B30";
 const SEEN_BLUE = "#34B7F1";
 const NOTICE_MS = 4000;
 
-// Two 76px action cells on the right (archive + delete)
+// Two 76px action cells on each side
 const RIGHT_ACTIONS_WIDTH = 152;
+const LEFT_ACTIONS_WIDTH = 152;
 // How far past the open actions you must drag before it counts as a "full swipe"
 const FULL_SWIPE_EXTRA = 70;
+// After a swipe ends, taps on the row are ignored for this long (ms)
+const SWIPE_TAP_GUARD_MS = 300;
+
+// Dropdown menu sizing
+const MENU_WIDTH = 232;
+const MENU_ROW_HEIGHT = 44;
+// How many recent messages the long-press preview can scroll through
+const PREVIEW_MESSAGES = 40;
+
+// Folders a chat can be moved into (shown as extra tabs once they hold a chat).
+// Replace with your own / user-created folders later.
+const FOLDERS = [
+  { key: "work", label: "Work" },
+  { key: "family", label: "Family" },
+  { key: "friends", label: "Friends" },
+];
 
 // Works with either `type: "direct" | "group" | "channel"` or isGroup / isChannel flags.
 function getKind(c) {
@@ -58,7 +85,7 @@ function getKind(c) {
   return "direct";
 }
 
-const TABS = [
+const BASE_TABS = [
   { key: "all", label: "All", match: () => true },
   { key: "unread", label: "Unread", match: (c) => c.unread > 0 },
   { key: "groups", label: "Groups", match: (c) => getKind(c) === "group" },
@@ -69,179 +96,7 @@ const TABS = [
   },
 ];
 
-/* ---------- Small View-built glyphs ---------- */
-
-function PinGlyph({ color, size = 1 }) {
-  return (
-    <View
-      style={{
-        width: 14 * size,
-        height: 14 * size,
-        alignItems: "center",
-        justifyContent: "center",
-        transform: [{ rotate: "45deg" }],
-      }}
-    >
-      <View
-        style={{
-          width: 8 * size,
-          height: 5 * size,
-          borderRadius: 2,
-          backgroundColor: color,
-        }}
-      />
-      <View
-        style={{
-          width: 11 * size,
-          height: 2 * size,
-          borderRadius: 1,
-          backgroundColor: color,
-        }}
-      />
-      <View
-        style={{
-          width: 1.6 * size,
-          height: 5 * size,
-          backgroundColor: color,
-        }}
-      />
-    </View>
-  );
-}
-
-function MuteGlyph({ color, size = 1 }) {
-  return (
-    <View
-      style={{
-        width: 15 * size,
-        height: 15 * size,
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <View
-        style={{
-          width: 10 * size,
-          height: 9 * size,
-          borderWidth: 1.5,
-          borderColor: color,
-          borderTopLeftRadius: 6,
-          borderTopRightRadius: 6,
-          borderBottomLeftRadius: 1,
-          borderBottomRightRadius: 1,
-        }}
-      />
-      <View
-        style={{
-          width: 4 * size,
-          height: 2 * size,
-          marginTop: 1,
-          borderBottomLeftRadius: 2,
-          borderBottomRightRadius: 2,
-          backgroundColor: color,
-        }}
-      />
-      <View
-        style={{
-          position: "absolute",
-          width: 17 * size,
-          height: 1.6,
-          backgroundColor: color,
-          transform: [{ rotate: "-45deg" }],
-        }}
-      />
-    </View>
-  );
-}
-
-function ArchiveGlyph({ color }) {
-  return (
-    <View style={{ width: 20, height: 18, alignItems: "center" }}>
-      <View
-        style={{
-          width: 20,
-          height: 6,
-          borderWidth: 1.8,
-          borderColor: color,
-          borderRadius: 2,
-        }}
-      />
-      <View
-        style={{
-          width: 16,
-          height: 11,
-          borderWidth: 1.8,
-          borderTopWidth: 0,
-          borderColor: color,
-          borderBottomLeftRadius: 3,
-          borderBottomRightRadius: 3,
-          alignItems: "center",
-        }}
-      >
-        <View
-          style={{
-            width: 6,
-            height: 1.8,
-            marginTop: 2.5,
-            borderRadius: 1,
-            backgroundColor: color,
-          }}
-        />
-      </View>
-    </View>
-  );
-}
-
-function TrashGlyph({ color }) {
-  return (
-    <View style={{ width: 18, height: 21, alignItems: "center" }}>
-      <View
-        style={{
-          width: 7,
-          height: 3,
-          borderWidth: 1.6,
-          borderBottomWidth: 0,
-          borderColor: color,
-          borderTopLeftRadius: 2,
-          borderTopRightRadius: 2,
-        }}
-      />
-      <View
-        style={{
-          width: 18,
-          height: 2.2,
-          borderRadius: 1,
-          backgroundColor: color,
-        }}
-      />
-      <View
-        style={{
-          width: 14,
-          height: 14,
-          marginTop: 1,
-          borderWidth: 1.8,
-          borderTopWidth: 0,
-          borderColor: color,
-          borderBottomLeftRadius: 3,
-          borderBottomRightRadius: 3,
-        }}
-      />
-    </View>
-  );
-}
-
-// Chat bubble with a dot (mark unread) or a check (mark read)
-function UnreadGlyph({ color, read }) {
-  return (
-    <View style={[styles.unreadBubble, { borderColor: color }]}>
-      {read ? (
-        <Text style={[styles.unreadMark, { color }]}>✓</Text>
-      ) : (
-        <View style={[styles.unreadDot, { backgroundColor: color }]} />
-      )}
-    </View>
-  );
-}
+/* ---------- Small glyphs ---------- */
 
 /* ---------- Message status ticks ---------- */
 
@@ -283,112 +138,10 @@ function MessageTicks({ status, mutedColor }) {
   );
 }
 
-/* ---------- Message type icons (camera / video camera / mic) ---------- */
-
-function CameraGlyph({ color }) {
-  return (
-    <View style={{ width: 15, height: 13, alignItems: "center" }}>
-      <View
-        style={{
-          width: 6,
-          height: 2.5,
-          backgroundColor: color,
-          borderTopLeftRadius: 1.5,
-          borderTopRightRadius: 1.5,
-        }}
-      />
-      <View
-        style={{
-          width: 15,
-          height: 10.5,
-          borderWidth: 1.5,
-          borderColor: color,
-          borderRadius: 3,
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <View
-          style={{
-            width: 5.5,
-            height: 5.5,
-            borderRadius: 3,
-            borderWidth: 1.5,
-            borderColor: color,
-          }}
-        />
-      </View>
-    </View>
-  );
-}
-
-function VideoCameraGlyph({ color }) {
-  return (
-    <View
-      style={{
-        width: 17,
-        height: 12,
-        flexDirection: "row",
-        alignItems: "center",
-      }}
-    >
-      <View
-        style={{
-          width: 11.5,
-          height: 10,
-          borderRadius: 2.5,
-          backgroundColor: color,
-        }}
-      />
-      <View
-        style={{
-          width: 0,
-          height: 0,
-          marginLeft: 0.5,
-          borderTopWidth: 3.5,
-          borderBottomWidth: 3.5,
-          borderRightWidth: 5,
-          borderTopColor: "transparent",
-          borderBottomColor: "transparent",
-          borderRightColor: color,
-        }}
-      />
-    </View>
-  );
-}
-
-function MicGlyph({ color }) {
-  return (
-    <View style={{ width: 12, height: 15, alignItems: "center" }}>
-      <View
-        style={{
-          width: 6,
-          height: 9,
-          borderRadius: 3,
-          backgroundColor: color,
-        }}
-      />
-      <View
-        style={{
-          width: 10,
-          height: 5,
-          marginTop: -4,
-          borderWidth: 1.5,
-          borderTopWidth: 0,
-          borderColor: color,
-          borderBottomLeftRadius: 5,
-          borderBottomRightRadius: 5,
-        }}
-      />
-      <View style={{ width: 1.5, height: 2, backgroundColor: color }} />
-    </View>
-  );
-}
-
 function MediaIcon({ kind, color }) {
-  if (kind === "photo") return <CameraGlyph color={color} />;
-  if (kind === "video") return <VideoCameraGlyph color={color} />;
-  if (kind === "voice") return <MicGlyph color={color} />;
+  if (kind === "photo") return <Icon name="camera" color={color} size={15} />;
+  if (kind === "video") return <Icon name="video" color={color} size={17} />;
+  if (kind === "voice") return <Icon name="mic" color={color} size={15} />;
   return null;
 }
 
@@ -401,6 +154,7 @@ function formatDuration(sec) {
 
 // Returns { kind, text } where kind decides the icon shown before the text
 function getPreview(m) {
+  if (!m) return { kind: null, text: "No messages yet" };
   switch (m.type) {
     case "image":
       return { kind: "photo", text: m.caption || "Photo" };
@@ -429,7 +183,7 @@ function getPreview(m) {
 
 /* ---------- Filter tabs ---------- */
 
-function FilterTabs({ active, onChange, unreadCount }) {
+function FilterTabs({ tabs, active, onChange, unreadCount }) {
   const { colors } = useTheme();
 
   return (
@@ -439,7 +193,7 @@ function FilterTabs({ active, onChange, unreadCount }) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.tabs}
       >
-        {TABS.map((tab) => {
+        {tabs.map((tab) => {
           const selected = tab.key === active;
           const count = tab.key === "unread" ? unreadCount : 0;
           const showCount = count > 0;
@@ -499,7 +253,9 @@ function FilterTabs({ active, onChange, unreadCount }) {
 
 /* ---------- Conversation row ---------- */
 
-function ConversationRow({ item, onLongPress }) {
+// onPress / onLongPress are decided by the parent (SwipeableConversation) so
+// swipes never count as taps.
+function ConversationRow({ item, onPress, onLongPress, selecting, selected }) {
   const { colors } = useTheme();
   const last = item.messages[item.messages.length - 1];
   const hasUnread = item.unread > 0;
@@ -511,19 +267,36 @@ function ConversationRow({ item, onLongPress }) {
 
   return (
     <Pressable
-      onPress={() => router.push(`/chats/${item.id}`)}
-      onLongPress={onLongPress}
+      onPress={onPress}
+      onLongPress={selecting ? undefined : onLongPress}
       delayLongPress={300}
       accessibilityRole="button"
+      accessibilityState={selecting ? { selected } : undefined}
       accessibilityLabel={`Open chat with ${item.name}${
         item.pinned ? ", pinned" : ""
       }${item.muted ? ", muted" : ""}`}
-      accessibilityHint="Long press for pin, mute and archive"
+      accessibilityHint="Long press for more options"
       style={({ pressed }) => [
         styles.row,
         pressed && { backgroundColor: colors.surface },
       ]}
     >
+      {selecting ? (
+        <View
+          style={[
+            styles.selectCircle,
+            {
+              borderColor: selected ? colors.primary : colors.textMuted,
+              backgroundColor: selected ? colors.primary : "transparent",
+            },
+          ]}
+        >
+          {selected ? (
+            <Icon name="tick" color={colors.onPrimary} size={14} />
+          ) : null}
+        </View>
+      ) : null}
+
       <Avatar
         uri={item.avatar}
         name={item.name}
@@ -539,7 +312,9 @@ function ConversationRow({ item, onLongPress }) {
           >
             {item.name}
           </Text>
-          {item.muted ? <MuteGlyph color={colors.textMuted} /> : null}
+          {item.muted ? (
+            <Icon name="mute" color={colors.textMuted} size={15} />
+          ) : null}
         </View>
         <View style={styles.previewLine}>
           {last.isMine ? (
@@ -574,7 +349,9 @@ function ConversationRow({ item, onLongPress }) {
           {last.time}
         </Text>
         <View style={styles.rightBottom}>
-          {item.pinned ? <PinGlyph color={colors.textMuted} /> : null}
+          {item.pinned ? (
+            <Icon name="pin" color={colors.textMuted} size={14} />
+          ) : null}
           {hasUnread ? (
             <View
               style={[
@@ -602,7 +379,7 @@ function ConversationRow({ item, onLongPress }) {
   );
 }
 
-/* ---------- Swipe actions (iMessage style) ---------- */
+/* ---------- Swipe actions ---------- */
 
 // Round icon button that scales / fades in as the row is dragged open
 function ActionButton({ progress, color, label, onPress, children }) {
@@ -641,35 +418,123 @@ function ActionButton({ progress, color, label, onPress, children }) {
   );
 }
 
-// Tells the parent (via onChange) when the row is dragged past the full-swipe line
-function FullSwipeWatcher({ translation, threshold, onChange }) {
+// Tells the parent (via onChange) when the row is dragged past the full-swipe line.
+// side="right" -> dragging left (right actions), side="left" -> dragging right (left actions)
+function FullSwipeWatcher({ translation, threshold, side, onChange }) {
   useAnimatedReaction(
-    () => translation.value <= -threshold,
+    () =>
+      side === "left"
+        ? translation.value >= threshold
+        : translation.value <= -threshold,
     (isFull, wasFull) => {
       if (isFull !== wasFull) runOnJS(onChange)(isFull);
     },
-    [threshold],
+    [threshold, side],
   );
   return null;
 }
 
-// Right actions: archive + delete. Dragging all the way turns the whole
+// Left actions: Read/Unread + Pin. Dragging all the way turns the whole
+// revealed area into a blue "Read"/"Unread" strip and toggles on release.
+function LeftActions({
+  item,
+  progress,
+  translation,
+  onFullChange,
+  onReadPress,
+  onPinPress,
+}) {
+  const { width } = useWindowDimensions();
+  const fullAt = LEFT_ACTIONS_WIDTH + FULL_SWIPE_EXTRA;
+  const fadeEnd = LEFT_ACTIONS_WIDTH + 24;
+  const isUnread = item.unread > 0;
+
+  const bgStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(
+      translation.value,
+      [LEFT_ACTIONS_WIDTH, fadeEnd],
+      [0, 1],
+      Extrapolation.CLAMP,
+    ),
+  }));
+  const glyphStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translation.value - 60 }],
+  }));
+  const buttonsFade = useAnimatedStyle(() => ({
+    opacity: interpolate(
+      translation.value,
+      [LEFT_ACTIONS_WIDTH, fadeEnd],
+      [1, 0],
+      Extrapolation.CLAMP,
+    ),
+  }));
+
+  return (
+    <View style={styles.actionsRow}>
+      <FullSwipeWatcher
+        translation={translation}
+        threshold={fullAt}
+        side="left"
+        onChange={onFullChange}
+      />
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.fullSwipeBgLeft, { width }, bgStyle]}
+      >
+        <Animated.View style={[styles.fullSwipeGlyphLeft, glyphStyle]}>
+          <Icon name="comment-block" color="#fff" size={26} />
+          <Text style={styles.fullSwipeText}>
+            {isUnread ? "Read" : "Unread"}
+          </Text>
+        </Animated.View>
+      </Animated.View>
+
+      <Animated.View style={[styles.actionsFade, buttonsFade]}>
+        <ActionButton
+          progress={progress}
+          color={ACTION_BLUE}
+          label={isUnread ? "Mark as read" : "Mark as unread"}
+          onPress={onReadPress}
+        >
+          <Icon name="comment-block" color="#fff" size={26} />
+        </ActionButton>
+        <ActionButton
+          progress={progress}
+          color={ACTION_ORANGE}
+          label={item.pinned ? "Unpin chat" : "Pin chat"}
+          onPress={onPinPress}
+        >
+          <Icon
+            name={item.pinned ? "pin-off" : "pin"}
+            color="#fff"
+            size={26}
+            strokeWidth={2}
+          />
+        </ActionButton>
+      </Animated.View>
+    </View>
+  );
+}
+
+// Right actions: More (3 dots) + Archive. Dragging all the way turns the whole
 // revealed area into a gray "Archive" strip and archives on release.
 function RightActions({
   item,
   progress,
   translation,
   onFullChange,
+  onMorePress,
   onArchivePress,
-  onDeletePress,
 }) {
   const { width } = useWindowDimensions();
   const fullAt = RIGHT_ACTIONS_WIDTH + FULL_SWIPE_EXTRA;
+  // the round buttons are completely gone by here, before the full-swipe strip is shown
+  const fadeEnd = RIGHT_ACTIONS_WIDTH + 24;
 
   const bgStyle = useAnimatedStyle(() => ({
     opacity: interpolate(
       translation.value,
-      [-fullAt, -RIGHT_ACTIONS_WIDTH],
+      [-fadeEnd, -RIGHT_ACTIONS_WIDTH],
       [1, 0],
       Extrapolation.CLAMP,
     ),
@@ -677,10 +542,10 @@ function RightActions({
   const glyphStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translation.value + 60 }],
   }));
-  const deleteFade = useAnimatedStyle(() => ({
+  const buttonsFade = useAnimatedStyle(() => ({
     opacity: interpolate(
       translation.value,
-      [-fullAt, -RIGHT_ACTIONS_WIDTH],
+      [-fadeEnd, -RIGHT_ACTIONS_WIDTH],
       [0, 1],
       Extrapolation.CLAMP,
     ),
@@ -691,6 +556,7 @@ function RightActions({
       <FullSwipeWatcher
         translation={translation}
         threshold={fullAt}
+        side="right"
         onChange={onFullChange}
       />
       <Animated.View
@@ -698,108 +564,195 @@ function RightActions({
         style={[styles.fullSwipeBg, { width }, bgStyle]}
       >
         <Animated.View style={[styles.fullSwipeGlyph, glyphStyle]}>
-          <ArchiveGlyph color="#fff" />
+          <Icon name="archive" color="#fff" size={22} />
           <Text style={styles.fullSwipeText}>
             {item.archived ? "Unarchive" : "Archive"}
           </Text>
         </Animated.View>
       </Animated.View>
 
-      <ActionButton
-        progress={progress}
-        color={ACTION_GRAY}
-        label={item.archived ? "Unarchive chat" : "Archive chat"}
-        onPress={onArchivePress}
-      >
-        <ArchiveGlyph color="#fff" />
-      </ActionButton>
-      <Animated.View style={deleteFade}>
+      {/* both round buttons fade out together, vertically centered in the row */}
+      <Animated.View style={[styles.actionsFade, buttonsFade]}>
         <ActionButton
           progress={progress}
-          color={ACTION_RED}
-          label="Delete chat"
-          onPress={onDeletePress}
+          color={ACTION_BLUE}
+          label="More options"
+          onPress={onMorePress}
         >
-          <TrashGlyph color="#fff" />
+          <Icon name="more" color="#fff" size={22} />
+        </ActionButton>
+        <ActionButton
+          progress={progress}
+          color={ACTION_GRAY}
+          label={item.archived ? "Unarchive chat" : "Archive chat"}
+          onPress={onArchivePress}
+        >
+          <Icon name="archive" color="#fff" size={22} />
         </ActionButton>
       </Animated.View>
     </View>
   );
 }
 
-// Swipe right: mark read / unread.
-// Swipe left: archive + delete buttons; swipe ALL the way left to archive.
+// Swipe right: mark read / unread + pin; swipe ALL the way right to toggle read.
+// Swipe left: more (3 dots) + archive; swipe ALL the way left to archive.
 function SwipeableConversation({
   item,
+  selecting,
+  selected,
+  onToggleSelect,
   onLongPress,
   onToggleRead,
+  onPin,
   onArchive,
-  onDelete,
+  onMore,
   onWillOpen,
 }) {
   const { colors } = useTheme();
   const ref = useRef(null);
-  const fullSwipe = useRef(false);
+  const fullSwipeRight = useRef(false); // dragged all the way left  -> archive
+  const fullSwipeLeft = useRef(false); // dragged all the way right -> read/unread
   const close = () => ref.current?.close();
-  const isUnread = item.unread > 0;
 
-  const handleFullChange = (isFull) => {
-    fullSwipe.current = isFull;
+  // --- Swipe vs. tap guard ---------------------------------------------
+  // The row's Pressable can still fire onPress when a drag is released.
+  // `dragging` is true from the first drag movement until a short moment
+  // after release; taps in that window are ignored. `isOpen` lets a tap on an
+  // open row just close it (like iMessage) instead of opening the chat.
+  const dragging = useRef(false);
+  const isOpen = useRef(false);
+  const guardTimer = useRef(null);
+  const closeTimer = useRef(null);
+
+  useEffect(
+    () => () => {
+      clearTimeout(guardTimer.current);
+      clearTimeout(closeTimer.current);
+    },
+    [],
+  );
+
+  const startDrag = () => {
+    clearTimeout(guardTimer.current);
+    dragging.current = true;
+  };
+  const endDrag = () => {
+    clearTimeout(guardTimer.current);
+    guardTimer.current = setTimeout(() => {
+      dragging.current = false;
+    }, SWIPE_TAP_GUARD_MS);
+  };
+
+  const handlePress = () => {
+    if (selecting) {
+      onToggleSelect(item.id);
+      return;
+    }
+    if (dragging.current) return; // that was a swipe, not a tap
+    if (isOpen.current) {
+      close(); // tapping an open row closes it
+      return;
+    }
+    router.push(`/chats/${item.id}`);
+  };
+
+  const handleLongPress = (e) => {
+    if (dragging.current || isOpen.current) return;
+    onLongPress(e);
+  };
+
+  const handleFullRight = (isFull) => {
+    fullSwipeRight.current = isFull;
+    if (isFull) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+  const handleFullLeft = (isFull) => {
+    fullSwipeLeft.current = isFull;
     if (isFull) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   return (
     <ReanimatedSwipeable
       ref={ref}
+      enabled={!selecting}
       friction={1.6}
-      overshootLeft={false}
-      overshootRight // allow dragging past the buttons for the full swipe
+      overshootLeft // allow dragging past the left buttons for the full swipe
+      overshootRight // allow dragging past the right buttons for the full swipe
       leftThreshold={36}
       rightThreshold={36}
+      onSwipeableOpenStartDrag={startDrag}
+      onSwipeableCloseStartDrag={startDrag}
+      onSwipeableWillClose={endDrag}
+      onSwipeableClose={() => {
+        isOpen.current = false;
+        endDrag();
+      }}
+      onSwipeableOpen={() => {
+        isOpen.current = true;
+        endDrag();
+      }}
       onSwipeableWillOpen={() => {
-        if (fullSwipe.current) {
-          // released past the full-swipe line -> archive
-          fullSwipe.current = false;
+        endDrag();
+        if (fullSwipeRight.current) {
+          // released past the full-swipe line (left) -> archive
+          fullSwipeRight.current = false;
           onArchive(item);
+          return;
+        }
+        if (fullSwipeLeft.current) {
+          // released past the full-swipe line (right) -> toggle read/unread,
+          // then snap the row shut again
+          fullSwipeLeft.current = false;
+          onToggleRead(item);
+          clearTimeout(closeTimer.current);
+          closeTimer.current = setTimeout(close, 80);
           return;
         }
         onWillOpen(ref);
       }}
-      renderLeftActions={(progress) => (
-        <View style={styles.actionsRow}>
-          <ActionButton
-            progress={progress}
-            color={ACTION_BLUE}
-            label={isUnread ? "Mark as read" : "Mark as unread"}
-            onPress={() => {
-              close();
-              onToggleRead(item);
-            }}
-          >
-            <UnreadGlyph color="#fff" read={isUnread} />
-          </ActionButton>
-        </View>
+      renderLeftActions={(progress, translation) => (
+        <LeftActions
+          item={item}
+          progress={progress}
+          translation={translation}
+          onFullChange={handleFullLeft}
+          onReadPress={() => {
+            close();
+            onToggleRead(item);
+          }}
+          onPinPress={() => {
+            close();
+            onPin(item);
+          }}
+        />
       )}
       renderRightActions={(progress, translation) => (
         <RightActions
           item={item}
           progress={progress}
           translation={translation}
-          onFullChange={handleFullChange}
+          onFullChange={handleFullRight}
+          onMorePress={(e) => {
+            // grab the tap position so the dropdown opens next to this row
+            const y = e?.nativeEvent?.pageY;
+            close();
+            onMore(item, y);
+          }}
           onArchivePress={() => {
             close();
             onArchive(item);
-          }}
-          onDeletePress={() => {
-            close();
-            onDelete(item);
           }}
         />
       )}
     >
       {/* opaque background so the actions don't show through the row */}
       <View style={{ backgroundColor: colors.background }}>
-        <ConversationRow item={item} onLongPress={onLongPress} />
+        <ConversationRow
+          item={item}
+          onPress={handlePress}
+          onLongPress={handleLongPress}
+          selecting={selecting}
+          selected={selected}
+        />
       </View>
     </ReanimatedSwipeable>
   );
@@ -821,7 +774,7 @@ function ArchivedRow({ count, onPress }) {
       ]}
     >
       <View style={[styles.archiveIcon, { backgroundColor: colors.surface }]}>
-        <ArchiveGlyph color={colors.textMuted} />
+        <Icon name="archive" color={colors.textMuted} size={20} />
       </View>
       <View style={styles.middle}>
         <Text style={[styles.name, { color: colors.text }]}>Archived</Text>
@@ -833,35 +786,325 @@ function ArchivedRow({ count, onPress }) {
   );
 }
 
-/* ---------- Long-press action sheet ---------- */
+/* ---------- Long-press context menu (preview + small dropdown) ---------- */
 
-function ActionRow({ icon, label, onPress, colors, destructive }) {
+const sameSender = (a, b) =>
+  a.isMine === b.isMine && (a.sender ?? "") === (b.sender ?? "");
+
+// Same run logic as the chat screen: tail on the last message of a run,
+// sender name on the first message of a run in groups.
+function decoratePreview(messages, isGroup) {
+  return messages.map((m, i) => {
+    const prev = messages[i - 1];
+    const next = messages[i + 1];
+    return {
+      ...m,
+      showTail: !next || !sameSender(next, m),
+      showTime: !next || !sameSender(next, m),
+      showName: isGroup && !m.isMine && (!prev || !sameSender(prev, m)),
+    };
+  });
+}
+
+// Mini version of the chat screen: same wallpaper, glass bubbles and messages.
+// - The message area scrolls (starts at the newest message, drag down for older)
+// - Tapping the preview (header or messages) opens the chat
+function ChatPreview({ chat, onPress }) {
+  const { colors } = useTheme();
+  const scrollRef = useRef(null);
+  // keep jumping to the newest message until the user starts scrolling
+  const stickToEnd = useRef(true);
+  const isGroup = !!chat.isGroup;
+  const wallpaper =
+    chat.wallpaper === false ? null : (chat.wallpaper ?? DEFAULT_WALLPAPER);
+  const glass = !!wallpaper;
+  const messages = useMemo(
+    () => decoratePreview(chat.messages.slice(-PREVIEW_MESSAGES), isGroup),
+    [chat, isGroup],
+  );
+  const fg = glass ? "#fff" : colors.text;
+  const muted = glass ? glassColors.muted : colors.textMuted;
+
+  const content = (
+    <GHScrollView
+      ref={scrollRef}
+      style={styles.previewScroll}
+      contentContainerStyle={styles.previewMessages}
+      showsVerticalScrollIndicator={false}
+      bounces
+      scrollEventThrottle={16}
+      onScrollBeginDrag={() => {
+        stickToEnd.current = false;
+      }}
+      onContentSizeChange={() => {
+        if (stickToEnd.current) {
+          scrollRef.current?.scrollToEnd({ animated: false });
+        }
+      }}
+    >
+      {/* Pressable lives INSIDE the scroll view: a tap opens the chat,
+          a drag scrolls. Messages themselves ignore touches. */}
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`Open chat with ${chat.name}`}
+      >
+        <View pointerEvents="none">
+          {messages.map((m, i) => (
+            <View
+              key={`${m.id}-${i}`}
+              style={isGroup && !m.isMine ? { paddingLeft: 40 } : null}
+            >
+              {m.showName ? (
+                <Text
+                  style={[styles.previewSender, { color: muted }]}
+                  numberOfLines={1}
+                >
+                  {m.sender}
+                </Text>
+              ) : null}
+              <ChatMessage message={m} />
+            </View>
+          ))}
+        </View>
+      </Pressable>
+    </GHScrollView>
+  );
+
+  return (
+    <View
+      style={[
+        styles.previewCard,
+        { backgroundColor: glass ? glassColors.base : colors.background },
+      ]}
+    >
+      {glass ? <ChatBackground uri={wallpaper} /> : null}
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel={`Open chat with ${chat.name}`}
+        style={styles.previewHeader}
+      >
+        <Avatar
+          uri={chat.avatar}
+          name={chat.name}
+          size={38}
+          online={chat.online}
+        />
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.sheetTitle, { color: fg }]} numberOfLines={1}>
+            {chat.name}
+          </Text>
+          {chat.status ? (
+            <Text
+              style={[styles.previewStatus, { color: muted }]}
+              numberOfLines={1}
+            >
+              {chat.status}
+            </Text>
+          ) : null}
+        </View>
+      </Pressable>
+      {glass ? (
+        <BubbleStyleProvider value={glassBubbles}>
+          {content}
+        </BubbleStyleProvider>
+      ) : (
+        content
+      )}
+    </View>
+  );
+}
+
+function MenuRow({ icon, label, onPress, textColor, destructive, dangerColor, trailing }) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
       style={({ pressed }) => [
-        styles.sheetRow,
-        pressed && { backgroundColor: colors.background },
+        styles.menuRow,
+        pressed && { backgroundColor: "rgba(255,255,255,0.12)" },
       ]}
     >
-      <View style={styles.sheetIcon}>{icon}</View>
       <Text
         style={[
-          styles.sheetLabel,
-          { color: destructive ? "#FF3B30" : colors.text },
+          styles.menuLabel,
+          { color: destructive ? dangerColor : textColor },
         ]}
       >
         {label}
       </Text>
+      {trailing ?? <View style={styles.menuIcon}>{icon}</View>}
     </Pressable>
   );
 }
 
-function ChatActionSheet({ chat, onClose, onPin, onMute, onArchive }) {
-  const { colors } = useTheme();
+/* ---------- Long-press menu ---------- */
+
+// `showPreview` = true  -> long press: chat preview + dropdown under it
+// `showPreview` = false -> "more" icon: only the dropdown, near the tapped row
+// Tapping anywhere outside the preview / dropdown closes everything.
+function ChatContextMenu({
+  chat,
+  showPreview,
+  anchorY,
+  onClose,
+  onOpenChat,
+  onPin,
+  onMute,
+  onToggleRead,
+  onArchive,
+  onClear,
+  onBlock,
+  onExitGroup,
+  onDelete,
+}) {
   const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
+
+  const unread = chat ? chat.unread > 0 : false;
+  // Group chats exit; direct chats block instead (see getKind).
+  const isGroup = chat ? getKind(chat) === "group" : false;
+  // Glass is dark-tinted, so icons/text use bright white in both themes for
+  // contrast.
+  const menuIcon = "#fff";
+  const menuText = "#fff";
+  const menuDanger = "#FF6B62";
+
+  // 7 rows: pin, mute, read, archive, clear, + (exit | block, delete)
+  const rowCount = 7;
+  const menuHeight = rowCount * MENU_ROW_HEIGHT + 8;
+  const minTop = insets.top + 8;
+  const maxTop = Math.max(minTop, height - insets.bottom - menuHeight - 8);
+  const dropdownTop = Math.min(
+    Math.max((anchorY ?? height / 2) - 24, minTop),
+    maxTop,
+  );
+
+  const card = chat ? (
+    // GlassSurface paints its own translucent background + hairline border;
+    // keep overflow hidden so the row highlight respects the rounded corners.
+    <GlassSurface style={[styles.menuCard, { overflow: "hidden" }]}>
+      <>
+        <MenuRow
+          textColor={menuText}
+          dangerColor={menuDanger}
+          label={chat.pinned ? "Unpin" : "Pin"}
+            onPress={onPin}
+            icon={
+              <Icon
+                name={chat.pinned ? "pin-off" : "pin"}
+                color={menuIcon}
+                size={20}
+                strokeWidth={2}
+              />
+            }
+          />
+          <MenuRow
+            textColor={menuText}
+            dangerColor={menuDanger}
+            label={chat.muted ? "Unmute" : "Mute"}
+            onPress={onMute}
+            icon={
+              <Icon name="mute" color={menuIcon} size={20} strokeWidth={2} />
+            }
+          />
+          <MenuRow
+            textColor={menuText}
+            dangerColor={menuDanger}
+            label={unread ? "Mark as read" : "Mark as unread"}
+            onPress={onToggleRead}
+            icon={
+              <Icon
+                name="comment-block"
+                color={menuIcon}
+                size={20}
+                strokeWidth={2}
+              />
+            }
+          />
+          <MenuRow
+            textColor={menuText}
+            dangerColor={menuDanger}
+            label={chat.archived ? "Unarchive" : "Archive"}
+            onPress={onArchive}
+            icon={
+              <Icon
+                name="archive"
+                color={menuIcon}
+                size={20}
+                strokeWidth={2}
+              />
+            }
+          />
+          <MenuRow
+            textColor={menuText}
+            dangerColor={menuDanger}
+            label="Clear chat"
+            onPress={onClear}
+            icon={
+              <Icon
+                name="clear"
+                color={menuIcon}
+                size={20}
+                strokeWidth={2}
+              />
+            }
+          />
+          {isGroup ? (
+            <MenuRow
+              textColor={menuText}
+              dangerColor={menuDanger}
+              label="Exit group"
+              destructive
+              onPress={onExitGroup}
+              icon={
+                <Icon
+                  name="exit"
+                  color={menuDanger}
+                  size={20}
+                  strokeWidth={2}
+                />
+              }
+            />
+          ) : (
+            <>
+              <MenuRow
+                textColor={menuText}
+                dangerColor={menuDanger}
+                label={chat.blocked ? "Unblock user" : "Block user"}
+                destructive
+                onPress={onBlock}
+                icon={
+                  <Icon
+                    name="block"
+                    color={menuDanger}
+                    size={20}
+                    strokeWidth={2}
+                  />
+                }
+              />
+              <MenuRow
+                textColor={menuText}
+                dangerColor={menuDanger}
+                label="Delete chat"
+                destructive
+                onPress={onDelete}
+                icon={
+                  <Icon
+                    name="delete-chat"
+                    color={menuDanger}
+                    size={20}
+                    strokeWidth={2}
+                  />
+                }
+              />
+            </>
+          )}
+        </>
+    </GlassSurface>
+  ) : null;
 
   return (
     <Modal
@@ -870,66 +1113,110 @@ function ChatActionSheet({ chat, onClose, onPin, onMute, onArchive }) {
       animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable
-        style={styles.backdrop}
-        onPress={onClose}
-        accessibilityLabel="Close menu"
-      >
+      {/* Modals render outside the app's gesture root, so they need their own */}
+      <GestureHandlerRootView style={styles.modalRoot}>
+        {/* Backdrop is a sibling (not a parent) of the content, so the preview
+            can scroll / be tapped and any tap outside it closes the menu. */}
         <Pressable
-          // swallow taps so only the backdrop closes the sheet
-          onPress={() => {}}
           style={[
-            styles.sheet,
+            StyleSheet.absoluteFill,
             {
-              backgroundColor: colors.surface,
-              paddingBottom: insets.bottom + 12,
+              backgroundColor: showPreview
+                ? "rgba(0,0,0,0.55)"
+                : "rgba(0,0,0,0.3)",
             },
           ]}
-        >
-          <View style={styles.sheetHandle} />
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Close menu"
+        />
 
-          {chat ? (
-            <>
-              <View style={styles.sheetHeader}>
-                <Avatar
-                  uri={chat.avatar}
-                  name={chat.name}
-                  size={40}
-                  online={false}
-                />
-                <Text
-                  style={[styles.sheetTitle, { color: colors.text }]}
-                  numberOfLines={1}
-                >
-                  {chat.name}
-                </Text>
+        {chat && showPreview ? (
+          <View
+            pointerEvents="box-none"
+            style={[
+              styles.menuLayer,
+              {
+                paddingTop: insets.top + 16,
+                paddingBottom: insets.bottom + 16,
+              },
+            ]}
+          >
+            <View pointerEvents="box-none" style={styles.menuStack}>
+              <ChatPreview chat={chat} onPress={onOpenChat} />
+              <View pointerEvents="box-none" style={styles.dropdownRight}>
+                {card}
               </View>
+            </View>
+          </View>
+        ) : null}
 
-              <ActionRow
-                colors={colors}
-                icon={<PinGlyph color={colors.text} size={1.3} />}
-                label={chat.pinned ? "Unpin chat" : "Pin chat"}
-                onPress={onPin}
-              />
-              <ActionRow
-                colors={colors}
-                icon={<MuteGlyph color={colors.text} size={1.2} />}
-                label={
-                  chat.muted ? "Unmute notifications" : "Mute notifications"
-                }
-                onPress={onMute}
-              />
-              <ActionRow
-                colors={colors}
-                icon={<ArchiveGlyph color={colors.text} />}
-                label={chat.archived ? "Unarchive chat" : "Archive chat"}
-                onPress={onArchive}
-              />
-            </>
-          ) : null}
-        </Pressable>
-      </Pressable>
+        {chat && !showPreview ? (
+          <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+            <View style={[styles.dropdownAnchored, { top: dropdownTop }]}>
+              {card}
+            </View>
+          </View>
+        ) : null}
+      </GestureHandlerRootView>
     </Modal>
+  );
+}
+
+/* ---------- Multi-select bottom bar ---------- */
+
+function SelectionBarItem({ label, onPress, color, icon, disabled }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={[styles.selectionItem, disabled && { opacity: 0.4 }]}
+    >
+      {icon}
+      <Text style={[styles.selectionLabel, { color }]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function SelectionBar({
+  count,
+  anyUnread,
+  onRead,
+  onArchive,
+  onDelete,
+  bottom,
+}) {
+  const { colors } = useTheme();
+  const disabled = count === 0;
+
+  return (
+    <View
+      style={[styles.selectionBar, { bottom, backgroundColor: colors.surface }]}
+    >
+      <SelectionBarItem
+        label={anyUnread ? "Read" : "Unread"}
+        color={colors.text}
+        onPress={onRead}
+        disabled={disabled}
+        icon={<Icon name="comment-block" color={colors.text} size={22} />}
+      />
+      <SelectionBarItem
+        label="Archive"
+        color={colors.text}
+        onPress={onArchive}
+        disabled={disabled}
+        icon={<Icon name="archive" color={colors.text} size={22} />}
+      />
+      <SelectionBarItem
+        label="Delete"
+        color={ACTION_RED}
+        onPress={onDelete}
+        disabled={disabled}
+        icon={<Icon name="trash" color={ACTION_RED} size={22} />}
+      />
+    </View>
   );
 }
 
@@ -958,7 +1245,10 @@ function EmptyState({ tab }) {
       title: "No chats yet",
       body: "Tap the new chat button to start one.",
     },
-  }[tab];
+  }[tab] ?? {
+    title: "This folder is empty",
+    body: "Long press a chat and choose Add to folder.",
+  };
 
   return (
     <View style={styles.empty}>
@@ -988,12 +1278,17 @@ export default function ChatsScreen() {
           pinned: !!c.pinned,
           muted: !!c.muted,
           archived: !!c.archived,
+          folder: c.folder ?? null,
           deleted: false,
         },
       ]),
     ),
   );
-  const [menuId, setMenuId] = useState(null);
+  // { id, preview: boolean, y: number | null } — preview=true for long press,
+  // preview=false for the swipe "more" button (dropdown only)
+  const [menu, setMenu] = useState(null);
+  const [selecting, setSelecting] = useState(false); // multi-select ("Edit")
+  const [selected, setSelected] = useState([]);
   const [notice, setNotice] = useState(null); // { text, undo? }
   const noticeTimer = useRef(null);
 
@@ -1025,31 +1320,50 @@ export default function ChatsScreen() {
     [conversations],
   );
 
+  // base tabs + a tab for every folder that currently holds a chat
+  const tabs = useMemo(() => {
+    const folderTabs = FOLDERS.filter((f) =>
+      conversations.some((c) => !c.archived && c.folder === f.key),
+    ).map((f) => ({
+      key: `folder:${f.key}`,
+      label: f.label,
+      match: (c) => c.folder === f.key,
+    }));
+    return [...BASE_TABS, ...folderTabs];
+  }, [conversations]);
+
+  // falls back to "All" if the active folder tab disappeared (e.g. last chat removed)
+  const tab = tabs.find((t) => t.key === activeTab) ?? tabs[0];
+
+  // Leave the archived view when its last chat is unarchived. Derived during
+  // render (never set state in an effect) so there's no cascading render.
+  const inArchivedView = showArchived && archivedCount > 0;
+
   const data = useMemo(() => {
-    const tab = TABS.find((t) => t.key === activeTab) ?? TABS[0];
     const list = conversations.filter((c) =>
-      showArchived ? c.archived : !c.archived && tab.match(c),
+      inArchivedView ? c.archived : !c.archived && tab.match(c),
     );
     // pinned chats float to the top, everything else keeps its order
     return [...list.filter((c) => c.pinned), ...list.filter((c) => !c.pinned)];
-  }, [conversations, activeTab, showArchived]);
+  }, [conversations, tab, inArchivedView]);
 
-  // Leave the archived view when its last chat is unarchived
-  useEffect(() => {
-    if (showArchived && archivedCount === 0) setShowArchived(false);
-  }, [showArchived, archivedCount]);
+  const exitSelecting = () => {
+    setSelecting(false);
+    setSelected([]);
+  };
 
-  // Android back closes the archived view first
+  // Android back: leave multi-select first, then the archived view
   useEffect(() => {
-    if (!showArchived) return undefined;
+    if (!inArchivedView && !selecting) return undefined;
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-      setShowArchived(false);
+      if (selecting) exitSelecting();
+      else setShowArchived(false);
       return true;
     });
     return () => sub.remove();
-  }, [showArchived]);
+  }, [inArchivedView, selecting]);
 
-  const menuChat = conversations.find((c) => c.id === menuId) ?? null;
+  const menuChat = conversations.find((c) => c.id === menu?.id) ?? null;
 
   const patch = (id, change) =>
     setFlags((prev) => ({ ...prev, [id]: { ...prev[id], ...change } }));
@@ -1060,12 +1374,19 @@ export default function ChatsScreen() {
     noticeTimer.current = setTimeout(() => setNotice(null), NOTICE_MS);
   };
 
-  const togglePin = () => {
-    const c = menuChat;
+  const openMenu = (id, { preview, y }) => {
+    setMenu({ id, preview, y: y ?? null });
+  };
+  const closeMenu = () => {
+    setMenu(null);
+  };
+
+  /* ----- single-chat actions ----- */
+
+  const pinChat = (c) => {
     if (!c) return;
     const pinnedNow = conversations.filter((x) => x.pinned).length;
     if (!c.pinned && pinnedNow >= MAX_PINS) {
-      setMenuId(null);
       Alert.alert(
         "Pin limit reached",
         `You can pin up to ${MAX_PINS} chats. Unpin one to pin another.`,
@@ -1074,16 +1395,13 @@ export default function ChatsScreen() {
     }
     Haptics.selectionAsync();
     patch(c.id, { pinned: !c.pinned });
-    setMenuId(null);
     showNotice(c.pinned ? "Chat unpinned" : "Chat pinned");
   };
 
-  const toggleMute = () => {
-    const c = menuChat;
+  const muteChat = (c) => {
     if (!c) return;
     Haptics.selectionAsync();
     patch(c.id, { muted: !c.muted });
-    setMenuId(null);
     showNotice(c.muted ? "Notifications on" : "Chat muted");
   };
 
@@ -1093,7 +1411,6 @@ export default function ChatsScreen() {
     const was = c.archived;
     // archiving also unpins, like most messengers
     patch(c.id, was ? { archived: false } : { archived: true, pinned: false });
-    setMenuId(null);
     showNotice(was ? "Chat unarchived" : "Chat archived", () =>
       patch(
         c.id,
@@ -1102,29 +1419,153 @@ export default function ChatsScreen() {
     );
   };
 
-  const toggleArchive = () => archiveChat(menuChat);
-
   const toggleRead = (c) => {
+    if (!c) return;
     Haptics.selectionAsync();
     patch(c.id, { unread: c.unread > 0 ? 0 : 1 });
   };
 
   const deleteChat = (c) => {
+    if (!c) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    patch(c.id, { deleted: true });
-    showNotice("Chat deleted", () => patch(c.id, { deleted: false }));
+    const title =
+      getKind(c) === "group" ? "Exit group?" : "Delete this chat?";
+    const body =
+      getKind(c) === "group"
+        ? `You will leave "${c.name}".`
+        : `Your copy of "${c.name}" will be removed.`;
+    const confirmLabel = getKind(c) === "group" ? "Exit" : "Delete";
+    Alert.alert(title, body, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: confirmLabel,
+        style: "destructive",
+        onPress: () => {
+          patch(c.id, { deleted: true });
+          showNotice(
+            getKind(c) === "group" ? "You left the group" : "Chat deleted",
+            () => patch(c.id, { deleted: false }),
+          );
+        },
+      },
+    ]);
+  };
+
+  const clearChat = (c) => {
+    if (!c) return;
+    Alert.alert("Clear this chat?", "All messages will be removed.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Clear",
+        style: "destructive",
+        onPress: () => {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          patch(c.id, { messages: [], unread: 0 });
+          showNotice("Chat cleared", () =>
+            patch(c.id, { messages: c.messages, unread: c.unread }),
+          );
+        },
+      },
+    ]);
+  };
+
+  const blockUser = (c) => {
+    if (!c) return;
+    Haptics.selectionAsync();
+    const was = !!c.blocked;
+    patch(c.id, { blocked: !was, muted: !was ? true : c.muted });
+    showNotice(was ? "User unblocked" : "User blocked", () =>
+      patch(c.id, { blocked: was }),
+    );
+  };
+
+  const setFolder = (c, key) => {
+    if (!c) return;
+    Haptics.selectionAsync();
+    // Folders UI was removed from the menu; keep the flag logic so existing
+    // folder tabs keep working.
+    const before = c.folder ?? null;
+    patch(c.id, { folder: key });
+    const label = FOLDERS.find((f) => f.key === key)?.label;
+    showNotice(key ? `Added to ${label}` : "Removed from folder", () =>
+      patch(c.id, { folder: before }),
+    );
+  };
+
+  /* ----- multi-select ----- */
+
+  const toggleSelecting = () => {
+    openRow.current?.close();
+    openRow.current = null;
+    if (selecting) exitSelecting();
+    else {
+      Haptics.selectionAsync();
+      setSelecting(true);
+    }
+  };
+
+  const toggleSelect = (id) => {
+    Haptics.selectionAsync();
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  };
+
+  const selectedChats = conversations.filter((c) => selected.includes(c.id));
+  const anySelectedUnread = selectedChats.some((c) => c.unread > 0);
+
+  const bulkRead = () => {
+    Haptics.selectionAsync();
+    selectedChats.forEach((c) =>
+      patch(c.id, { unread: anySelectedUnread ? 0 : 1 }),
+    );
+    exitSelecting();
+  };
+
+  const bulkArchive = () => {
+    Haptics.selectionAsync();
+    const before = selectedChats.map((c) => ({
+      id: c.id,
+      archived: c.archived,
+      pinned: c.pinned,
+    }));
+    selectedChats.forEach((c) =>
+      patch(
+        c.id,
+        c.archived ? { archived: false } : { archived: true, pinned: false },
+      ),
+    );
+    exitSelecting();
+    showNotice(
+      `${before.length} chat${before.length === 1 ? "" : "s"} updated`,
+      () =>
+        before.forEach((b) =>
+          patch(b.id, { archived: b.archived, pinned: b.pinned }),
+        ),
+    );
+  };
+
+  const bulkDelete = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    const ids = selectedChats.map((c) => c.id);
+    ids.forEach((id) => patch(id, { deleted: true }));
+    exitSelecting();
+    showNotice(`${ids.length} chat${ids.length === 1 ? "" : "s"} deleted`, () =>
+      ids.forEach((id) => patch(id, { deleted: false })),
+    );
   };
 
   // Tabs (and the Archived row) live in the list header so they scroll away
   // with the chats instead of staying pinned under the title.
-  const listHeader = showArchived ? null : (
+  const listHeader = inArchivedView ? null : (
     <View>
       <FilterTabs
-        active={activeTab}
+        tabs={tabs}
+        active={tab.key}
         onChange={setActiveTab}
         unreadCount={unreadCount}
       />
-      {activeTab === "all" && archivedCount > 0 ? (
+      {tab.key === "all" && archivedCount > 0 ? (
         <ArchivedRow
           count={archivedCount}
           onPress={() => setShowArchived(true)}
@@ -1140,43 +1581,71 @@ export default function ChatsScreen() {
     >
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          {showArchived ? (
+          {inArchivedView && !selecting ? (
             <GlassButton
               size={44}
               label="Back to chats"
               onPress={() => setShowArchived(false)}
             >
-              <BackIcon color={colors.text} size={22} />
+              <Icon name="back" color={colors.text} size={22} />
             </GlassButton>
           ) : null}
           <Text style={[styles.title, { color: colors.text }]}>
-            {showArchived ? "Archived" : "Chats"}
+            {selecting
+              ? selected.length
+                ? `${selected.length} selected`
+                : "Select chats"
+              : inArchivedView
+                ? "Archived"
+                : "Chats"}
           </Text>
         </View>
-        <GlassButton size={44} label="Search chats">
-          <SearchIcon color={colors.text} size={22} />
-        </GlassButton>
+        <View style={styles.headerRight}>
+          <Pressable
+            onPress={toggleSelecting}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={selecting ? "Done selecting" : "Edit chats"}
+          >
+            <Text style={[styles.editText, { color: colors.primary }]}>
+              {selecting ? "Done" : "Edit"}
+            </Text>
+          </Pressable>
+          {selecting ? null : (
+            <GlassButton size={44} label="Search chats">
+              <Icon name="search" color={colors.text} size={22} />
+            </GlassButton>
+          )}
+        </View>
       </View>
 
       <FlatList
         data={data}
         keyExtractor={(c) => c.id}
+        extraData={[selecting, selected]}
         renderItem={({ item }) => (
           <SwipeableConversation
             item={item}
+            selecting={selecting}
+            selected={selected.includes(item.id)}
+            onToggleSelect={toggleSelect}
             onWillOpen={handleWillOpen}
             onToggleRead={toggleRead}
+            onPin={pinChat}
             onArchive={archiveChat}
-            onDelete={deleteChat}
-            onLongPress={() => {
+            // "more" icon -> dropdown only (no chat preview)
+            onMore={(c, y) => openMenu(c.id, { preview: false, y })}
+            // long press -> chat preview + dropdown
+            onLongPress={(e) => {
+              const y = e?.nativeEvent?.pageY;
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              setMenuId(item.id);
+              openMenu(item.id, { preview: true, y });
             }}
           />
         )}
         ListHeaderComponent={listHeader}
         ListEmptyComponent={
-          <EmptyState tab={showArchived ? "archived" : activeTab} />
+          <EmptyState tab={inArchivedView ? "archived" : tab.key} />
         }
         // room for the floating glass tab bar and the FAB
         contentContainerStyle={{
@@ -1189,7 +1658,11 @@ export default function ChatsScreen() {
         <View
           style={[
             styles.notice,
-            { bottom: insets.bottom + 100, backgroundColor: colors.text },
+            {
+              bottom: insets.bottom + (selecting ? 160 : 100),
+              right: selecting ? 20 : 94,
+              backgroundColor: colors.text,
+            },
           ]}
         >
           <Text style={[styles.noticeText, { color: colors.background }]}>
@@ -1214,28 +1687,83 @@ export default function ChatsScreen() {
         </View>
       ) : null}
 
-      <Pressable
-        onPress={() => router.push("/chats/new")}
-        accessibilityRole="button"
-        accessibilityLabel="Start a new chat"
-        style={({ pressed }) => [
-          styles.fab,
-          {
-            backgroundColor: colors.primary,
-            bottom: insets.bottom + 92, // sits above the floating tab bar
-            transform: [{ scale: pressed ? 0.94 : 1 }],
-          },
-        ]}
-      >
-        <AddChatIcon color={colors.onPrimary} size={26} />
-      </Pressable>
+      {selecting ? (
+        <SelectionBar
+          count={selected.length}
+          anyUnread={anySelectedUnread}
+          onRead={bulkRead}
+          onArchive={bulkArchive}
+          onDelete={bulkDelete}
+          bottom={insets.bottom + 92} // sits above the floating tab bar
+        />
+      ) : (
+        <Pressable
+          onPress={() => router.push("/chats/new")}
+          accessibilityRole="button"
+          accessibilityLabel="Start a new chat"
+          style={({ pressed }) => [
+            styles.fab,
+            {
+              backgroundColor: colors.primary,
+              bottom: insets.bottom + 92, // sits above the floating tab bar
+              transform: [{ scale: pressed ? 0.94 : 1 }],
+            },
+          ]}
+        >
+          <Icon name="add-chat" color={colors.onPrimary} size={26} />
+        </Pressable>
+      )}
 
-      <ChatActionSheet
+      <ChatContextMenu
         chat={menuChat}
-        onClose={() => setMenuId(null)}
-        onPin={togglePin}
-        onMute={toggleMute}
-        onArchive={toggleArchive}
+        showPreview={menu?.preview ?? true}
+        anchorY={menu?.y ?? null}
+        onClose={closeMenu}
+        onOpenChat={() => {
+          const c = menuChat;
+          closeMenu();
+          if (c) router.push(`/chats/${c.id}`);
+        }}
+        onPin={() => {
+          const c = menuChat;
+          closeMenu();
+          if (c) pinChat(c);
+        }}
+        onMute={() => {
+          const c = menuChat;
+          closeMenu();
+          if (c) muteChat(c);
+        }}
+        onToggleRead={() => {
+          const c = menuChat;
+          closeMenu();
+          if (c) toggleRead(c);
+        }}
+        onArchive={() => {
+          const c = menuChat;
+          closeMenu();
+          if (c) archiveChat(c);
+        }}
+        onDelete={() => {
+          const c = menuChat;
+          closeMenu();
+          if (c) deleteChat(c);
+        }}
+        onClear={() => {
+          const c = menuChat;
+          closeMenu();
+          if (c) clearChat(c);
+        }}
+        onBlock={() => {
+          const c = menuChat;
+          closeMenu();
+          if (c) blockUser(c);
+        }}
+        onExitGroup={() => {
+          const c = menuChat;
+          closeMenu();
+          if (c) deleteChat(c);
+        }}
       />
     </SafeAreaView>
   );
@@ -1251,7 +1779,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
+  headerRight: { flexDirection: "row", alignItems: "center", gap: 14 },
   title: { fontSize: 26, fontWeight: "700" },
+  editText: { fontSize: 16.5, fontWeight: "600" },
 
   archiveIcon: {
     width: 54,
@@ -1288,6 +1818,14 @@ const styles = StyleSheet.create({
     gap: 14,
     paddingHorizontal: 20,
     paddingVertical: 12,
+  },
+  selectCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
   },
   middle: { flex: 1, gap: 3 },
   nameLine: { flexDirection: "row", alignItems: "center", gap: 6 },
@@ -1351,6 +1889,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  // full swipe (left drag) -> archive strip
   fullSwipeBg: {
     position: "absolute",
     top: 0,
@@ -1365,23 +1904,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
   },
-  fullSwipeText: { color: "#fff", fontSize: 12, fontWeight: "700" },
-  unreadBubble: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    alignItems: "center",
+  // full swipe (right drag) -> read / unread strip
+  fullSwipeBgLeft: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: ACTION_BLUE,
     justifyContent: "center",
   },
-  unreadDot: { width: 8, height: 8, borderRadius: 4 },
-  unreadMark: { fontSize: 13, fontWeight: "800", lineHeight: 15 },
+  fullSwipeGlyphLeft: {
+    position: "absolute",
+    left: 0,
+    alignItems: "center",
+    gap: 4,
+  },
+  fullSwipeText: { color: "#fff", fontSize: 12, fontWeight: "700" },
 
   // undo notice
   notice: {
     position: "absolute",
     left: 20,
-    right: 94,
     minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
@@ -1394,42 +1937,85 @@ const styles = StyleSheet.create({
   noticeText: { flex: 1, fontSize: 14.5, fontWeight: "500" },
   noticeUndo: { fontSize: 14.5, fontWeight: "700" },
 
-  // action sheet
-  backdrop: {
-    flex: 1,
+  // multi-select bar
+  selectionBar: {
+    position: "absolute",
+    left: 20,
+    right: 20,
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingVertical: 12,
+    borderRadius: 22,
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  selectionItem: { alignItems: "center", gap: 4, minWidth: 72 },
+  selectionLabel: { fontSize: 12, fontWeight: "600" },
+
+  // context menu
+  modalRoot: { flex: 1 },
+  menuLayer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  menuStack: { gap: 10 },
+  dropdownRight: { alignItems: "flex-end" },
+  dropdownAnchored: {
+    position: "absolute",
+    right: 20,
+  },
+
+  previewCard: {
+    borderRadius: 22,
+    height: 360,
+    overflow: "hidden",
+  },
+  previewScroll: { flex: 1 },
+  previewMessages: {
+    flexGrow: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.45)",
+    paddingBottom: 12,
   },
-  sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 8,
-    paddingHorizontal: 8,
+  previewSender: {
+    fontSize: 12.5,
+    paddingLeft: 22,
+    marginTop: 4,
+    marginBottom: 2,
   },
-  sheetHandle: {
-    alignSelf: "center",
-    width: 38,
-    height: 4,
-    borderRadius: 2,
-    marginBottom: 10,
-    backgroundColor: "rgba(128,128,128,0.4)",
-  },
-  sheetHeader: {
+  actionsFade: { flexDirection: "row", alignItems: "center" },
+  previewHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    paddingHorizontal: 12,
-    paddingBottom: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
-  sheetTitle: { flex: 1, fontSize: 17, fontWeight: "700" },
-  sheetRow: {
+  previewStatus: { fontSize: 12.5 },
+
+  // small dropdown card (GlassSurface paints the glass background + border)
+  menuCard: {
+    width: MENU_WIDTH,
+    borderRadius: 14,
+    overflow: "hidden",
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+  },
+  menuRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 14,
-    borderRadius: 14,
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    height: MENU_ROW_HEIGHT,
   },
-  sheetIcon: { width: 26, alignItems: "center" },
-  sheetLabel: { fontSize: 16, fontWeight: "500" },
+  menuLabel: { fontSize: 15.5, fontWeight: "500" },
+  menuIcon: { width: 24, alignItems: "flex-end" },
+  divider: { height: StyleSheet.hairlineWidth * 2 },
+  sheetTitle: { fontSize: 17, fontWeight: "700" },
 });

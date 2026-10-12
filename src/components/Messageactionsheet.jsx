@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CopyIcon, ReplyIcon, ForwardIcon, TrashIcon } from "./Icons";
+import Icon from "./icons";
 import Animated, {
   Easing,
   runOnJS,
@@ -49,19 +49,28 @@ export default function MessageActionSheet({
 }) {
   const insets = useSafeAreaInsets();
   const progress = useSharedValue(0); // 0 = hidden, 1 = fully shown
-  const [mounted, setMounted] = useState(!!message);
-  // Keep the last message around so the content doesn't blank out while closing
+  // Keep the last message around so the content doesn't blank out while closing.
+  // Derived during render (adjust state while rendering): when a new message
+  // arrives, swap it in. When it closes (message -> null), keep showing the
+  // previous content while the close animation plays.
   const [shown, setShown] = useState({ message, preview });
+  const [mounted, setMounted] = useState(!!message);
+  if (message && shown.message !== message) {
+    setShown({ message, preview });
+    setMounted(true);
+  }
 
+  // Animate open/close on message changes; content swap is handled above.
+  const prevMessage = useRef(message);
   useEffect(() => {
-    if (message) {
-      setShown({ message, preview });
-      setMounted(true);
+    if (message && prevMessage.current !== message) {
+      prevMessage.current = message;
       progress.value = withTiming(1, {
         duration: OPEN_MS,
         easing: Easing.out(Easing.cubic),
       });
-    } else {
+    } else if (!message && prevMessage.current) {
+      prevMessage.current = null;
       progress.value = withTiming(
         0,
         { duration: CLOSE_MS, easing: Easing.in(Easing.quad) },
@@ -70,7 +79,7 @@ export default function MessageActionSheet({
         },
       );
     }
-  }, [message]);
+  }, [message, progress]);
 
   const backdropStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
   const cardStyle = useAnimatedStyle(() => ({
@@ -85,18 +94,18 @@ export default function MessageActionSheet({
   };
 
   const rows = [
-    { key: "copy", label: "Copy", Icon: CopyIcon, onPress: onCopy },
-    { key: "reply", label: "Reply", Icon: ReplyIcon, onPress: onReply },
+    { key: "copy", label: "Copy", icon: "copy", onPress: onCopy },
+    { key: "reply", label: "Reply", icon: "reply", onPress: onReply },
     {
       key: "forward",
       label: "Forward",
-      Icon: ForwardIcon,
+      icon: "forward",
       onPress: onForward,
     },
     {
       key: "delete",
       label: "Delete",
-      Icon: TrashIcon,
+      icon: "trash",
       onPress: onDelete,
       danger: true,
     },
@@ -177,12 +186,6 @@ export default function MessageActionSheet({
           <View>
             {rows.map((row, i) => {
               const color = row.danger ? "#E5484D" : colors.text;
-              const Icon = row.Icon;
-              if (__DEV__ && !Icon) {
-                console.warn(
-                  `Icons.jsx has no export for the "${row.label}" icon - fix the import at the top of this file`,
-                );
-              }
               return (
                 <Pressable
                   key={row.key}
@@ -199,7 +202,7 @@ export default function MessageActionSheet({
                   ]}
                 >
                   <Text style={[styles.rowLabel, { color }]}>{row.label}</Text>
-                  {Icon ? <Icon color={color} size={20} /> : null}
+                  <Icon name={row.icon} color={color} size={20} />
                 </Pressable>
               );
             })}

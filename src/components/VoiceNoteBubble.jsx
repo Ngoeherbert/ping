@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, Text, View, StyleSheet } from "react-native";
 import BubbleShell, { useBubbleColors } from "./BubbleShell";
-import { PlayGlyph, PauseGlyph } from "./Icons";
+import Icon from "./icons";
 import { formatDuration } from "../utils/formatDuration";
 
 const BARS = 28;
@@ -53,9 +53,9 @@ export default function VoiceNoteBubble({ id = "voice", duration = 10, isMine = 
         style={[styles.button, { backgroundColor: `${fg}33` }]}
       >
         {playing ? (
-          <PauseGlyph color={fg} size={18} />
+          <Icon name="pause" color={fg} size={18} />
         ) : (
-          <PlayGlyph color={fg} size={18} />
+          <Icon name="play" color={fg} size={18} />
         )}
       </Pressable>
 

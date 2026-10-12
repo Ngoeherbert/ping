@@ -4,13 +4,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { useTheme } from "../../../src/theme/useTheme";
 import Avatar from "../../../src/components/Avatar";
 import GlassButton from "../../../src/components/GlassButton";
-import {
-  HeartIcon2,
-  CommentIcon,
-  ShareIcon,
-  BookmarkIcon,
-} from "../../../src/components/Icons";
-import { MoreVerticalGlyph } from "../../../src/components/ChatIcons";
+import Icon from "../../../src/components/icons";
 import { REELS } from "../../../src/data/reels";
 import { VideoView, useVideoPlayer } from "expo-video";
 
@@ -47,19 +41,24 @@ function SideActions({ isLiked, isSaved, onLike, onSave, onShare }) {
   return (
     <View style={styles.sideActions}>
       <GlassButton size={56} label="Like" onPress={onLike}>
-        <HeartIcon2 color={isLiked ? colors.danger : colors.text} size={28} />
+        <Icon
+          name="heart"
+          color={isLiked ? colors.danger : colors.text}
+          size={28}
+        />
       </GlassButton>
 
       <GlassButton size={56} label="Comment">
-        <CommentIcon color={colors.text} size={26} />
+        <Icon name="comment" color={colors.text} size={26} />
       </GlassButton>
 
       <GlassButton size={56} label="Share" onPress={onShare}>
-        <ShareIcon color={colors.text} size={26} />
+        <Icon name="share" color={colors.text} size={26} />
       </GlassButton>
 
       <GlassButton size={56} label="Save" onPress={onSave}>
-        <BookmarkIcon
+        <Icon
+          name="bookmark"
           color={isSaved ? colors.primary : colors.text}
           size={26}
         />
@@ -67,7 +66,7 @@ function SideActions({ isLiked, isSaved, onLike, onSave, onShare }) {
 
       <View style={styles.moreContainer}>
         <GlassButton size={56} label="More">
-          <MoreVerticalGlyph color={colors.text} size={24} />
+          <Icon name="more" color={colors.text} size={24} />
         </GlassButton>
       </View>
     </View>

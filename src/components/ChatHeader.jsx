@@ -5,8 +5,7 @@ import { glassColors } from "../theme/chatTheme";
 import Avatar from "./Avatar";
 import GlassSurface from "./GlassSurface";
 import GlassButton from "./GlassButton";
-import { BackIcon, PhoneIcon, VideoCallIcon } from "./Icons";
-import { MoreVerticalGlyph } from "./ChatIcons";
+import Icon from "./icons";
 
 // Three floating glass pieces: back button, title capsule, actions capsule.
 // `onGlass` (chat has a wallpaper) forces the dark glass look with white text.
@@ -25,7 +24,7 @@ export default function ChatHeader({ conversation, onGlass = false }) {
   return (
     <View style={styles.header}>
       <GlassButton size={46} scheme={scheme} label="Back" onPress={() => router.back()}>
-        <BackIcon color={text} size={24} />
+        <Icon name="back" color={text} size={24} />
       </GlassButton>
 
       <GlassSurface scheme={scheme} style={styles.titlePill}>
@@ -47,10 +46,10 @@ export default function ChatHeader({ conversation, onGlass = false }) {
 
       <GlassSurface scheme={scheme} style={styles.actions}>
         <Pressable hitSlop={8} accessibilityRole="button" accessibilityLabel="Video call">
-          <VideoCallIcon color={action} size={24} />
+          <Icon name="video" color={action} size={24} />
         </Pressable>
         <Pressable hitSlop={8} accessibilityRole="button" accessibilityLabel="Voice call">
-          <PhoneIcon color={action} size={22} />
+          <Icon name="mic" color={action} size={22} />
         </Pressable>
       </GlassSurface>
     </View>

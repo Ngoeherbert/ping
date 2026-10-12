@@ -3,20 +3,14 @@ import { useSegments } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../theme/useTheme";
 import GlassSurface from "./GlassSurface";
-import {
-  UpdateIcon,
-  CallsIcon,
-  ReelsIcon,
-  ChatsIcon,
-  ProfileIcon,
-} from "./Icons";
+import Icon from "./icons";
 
 const TABS = {
-  updates: { label: "Updates", Icon: UpdateIcon },
-  calls: { label: "Calls", Icon: CallsIcon },
-  reels: { label: "Reels", Icon: ReelsIcon },
-  chats: { label: "Chats", Icon: ChatsIcon },
-  profile: { label: "Profile", Icon: ProfileIcon },
+  updates: { label: "Updates", icon: "updates" },
+  calls: { label: "Calls", icon: "calls" },
+  reels: { label: "Reels", icon: "reels" },
+  chats: { label: "Chats", icon: "chats" },
+  profile: { label: "Profile", icon: "profile" },
 };
 
 // Floating glass tab bar. It sits over the screen content, so scrolling lists
@@ -73,7 +67,7 @@ export default function BottomBar({ state, navigation }) {
                   focused && { backgroundColor: colors.primarySoft },
                 ]}
               >
-                <tab.Icon color={color} size={22} filled={focused} />
+                <Icon name={tab.icon} color={color} size={22} />
               </View>
               <Text style={[styles.label, { color }, focused && styles.labelActive]}>
                 {tab.label}

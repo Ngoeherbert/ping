@@ -21,13 +21,7 @@ import {
 import { useTheme } from "../../../src/theme/useTheme";
 import Avatar from "../../../src/components/Avatar";
 import GlassSurface from "../../../src/components/GlassSurface";
-import {
-  SearchIcon,
-  InfoCircleIcon,
-  CallIncomingIcon,
-  CallOutgoingIcon,
-  CallMissedIcon,
-} from "../../../src/components/Icons";
+import Icon from "../../../src/components/icons";
 import { RECENT_CALLS } from "../../../src/data/calls";
 
 const IOS_BLUE = "#007AFF";
@@ -49,89 +43,6 @@ const CALL_LABELS = {
   missed: "Missed",
   group: "Group",
 };
-
-/* ---------- View-built glyphs ---------- */
-
-function VideoGlyph({ color, size = 18 }) {
-  const w = size;
-  const h = size * 0.72;
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center" }}>
-      <View
-        style={{
-          width: w * 0.68,
-          height: h,
-          borderRadius: size * 0.2,
-          backgroundColor: color,
-        }}
-      />
-      <View
-        style={{
-          width: 0,
-          height: 0,
-          marginLeft: 1,
-          borderTopWidth: h * 0.32,
-          borderBottomWidth: h * 0.32,
-          borderRightWidth: w * 0.3,
-          borderTopColor: "transparent",
-          borderBottomColor: "transparent",
-          borderRightColor: color,
-        }}
-      />
-    </View>
-  );
-}
-
-function TrashGlyph({ color, size = 22 }) {
-  return (
-    <View
-      style={{
-        width: size,
-        height: size,
-        alignItems: "center",
-        justifyContent: "flex-end",
-      }}
-    >
-      {/* handle */}
-      <View
-        style={{
-          position: "absolute",
-          top: size * 0.06,
-          width: size * 0.32,
-          height: size * 0.14,
-          borderWidth: 2,
-          borderBottomWidth: 0,
-          borderTopLeftRadius: 2,
-          borderTopRightRadius: 2,
-          borderColor: color,
-        }}
-      />
-      {/* lid */}
-      <View
-        style={{
-          position: "absolute",
-          top: size * 0.2,
-          width: size * 0.86,
-          height: 2.2,
-          borderRadius: 1.1,
-          backgroundColor: color,
-        }}
-      />
-      {/* bin */}
-      <View
-        style={{
-          width: size * 0.62,
-          height: size * 0.78,
-          borderWidth: 2,
-          borderTopWidth: 0,
-          borderBottomLeftRadius: 4,
-          borderBottomRightRadius: 4,
-          borderColor: color,
-        }}
-      />
-    </View>
-  );
-}
 
 /* ---------- Date formatting ---------- */
 
@@ -183,11 +94,11 @@ function formatCallTime(item) {
 
 function CallTypeIcon({ type, color }) {
   if (type === "incoming")
-    return <CallIncomingIcon color={color} size={META_ICON_SIZE} />;
+    return <Icon name="call-incoming" color={color} size={META_ICON_SIZE} />;
   if (type === "outgoing")
-    return <CallOutgoingIcon color={color} size={META_ICON_SIZE} />;
+    return <Icon name="call-outgoing" color={color} size={META_ICON_SIZE} />;
   if (type === "missed" || type === "group")
-    return <CallMissedIcon color={color} size={META_ICON_SIZE} />;
+    return <Icon name="call-missed" color={color} size={META_ICON_SIZE} />;
   return null;
 }
 
@@ -227,7 +138,7 @@ function InfoButton({ item }) {
       accessibilityLabel={`Call info for ${item.name}`}
       style={({ pressed }) => [styles.callButton, pressed && { opacity: 0.6 }]}
     >
-      <InfoCircleIcon color={IOS_BLUE} size={24} />
+      <Icon name="info-circle" color={IOS_BLUE} size={24} />
     </Pressable>
   );
 }
@@ -244,9 +155,9 @@ function FavoriteCardBody({ item, colors }) {
       />
       <View style={styles.favLabelRow}>
         {item.video ? (
-          <VideoGlyph color={colors.textMuted} size={13} />
+          <Icon name="video" color={colors.textMuted} size={13} />
         ) : (
-          <CallOutgoingIcon color={colors.textMuted} size={12} />
+          <Icon name="call-outgoing" color={colors.textMuted} size={12} />
         )}
         <Text
           style={[styles.favName, { color: colors.textMuted }]}
@@ -403,7 +314,7 @@ function FavoritePopOut({ focus, colors, onClose, onRemove }) {
           <Text style={[styles.popMenuText, { color: MISSED_RED }]}>
             Remove from Favorites
           </Text>
-          <TrashGlyph color={MISSED_RED} size={18} />
+          <Icon name="trash" color={MISSED_RED} size={18} />
         </Pressable>
       </Animated.View>
     </Modal>
@@ -458,7 +369,7 @@ function CallRow({
 
         <View style={styles.metaRow}>
           {item.video ? (
-            <VideoGlyph color={metaColor} size={15} />
+            <Icon name="video" color={metaColor} size={15} />
           ) : (
             <CallTypeIcon type={item.type} color={metaColor} />
           )}
@@ -570,7 +481,7 @@ function SwipeRow({
             pressed && { opacity: 0.7 },
           ]}
         >
-          <Text style={styles.favGlyph}>{isFavorite ? "☆" : "★"}</Text>
+          <Icon name="star" color="#fff" size={20} />
         </Pressable>
 
         <Pressable
@@ -583,7 +494,7 @@ function SwipeRow({
             pressed && { opacity: 0.7 },
           ]}
         >
-          <TrashGlyph color="#fff" size={22} />
+          <Icon name="trash" color="#fff" size={22} />
         </Pressable>
       </View>
     </ScrollView>
@@ -736,14 +647,15 @@ export default function CallsScreen() {
             disabled={selectedCount === 0}
           >
             <View style={{ opacity: selectedCount === 0 ? 0.4 : 1 }}>
-              <TrashGlyph
+              <Icon
+                name="trash"
                 color={selectedCount === 0 ? colors.textMuted : MISSED_RED}
               />
             </View>
           </CircleButton>
         ) : (
           <CircleButton label="Search calls">
-            <SearchIcon color={colors.text} size={22} />
+            <Icon name="search" color={colors.text} size={22} />
           </CircleButton>
         )}
       </View>
@@ -904,7 +816,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  favGlyph: { color: "#fff", fontSize: 26, lineHeight: 30 },
 
   // favorite pop-out
   popCard: {

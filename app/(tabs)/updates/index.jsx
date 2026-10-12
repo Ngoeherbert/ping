@@ -17,7 +17,7 @@ import { useVideoPlayer, VideoView } from "expo-video";
 import { useTheme } from "../../../src/theme/useTheme";
 import Avatar from "../../../src/components/Avatar";
 import GlassButton from "../../../src/components/GlassButton";
-import { SearchIcon } from "../../../src/components/Icons";
+import Icon from "../../../src/components/icons";
 import { STORIES, UPDATES } from "../../../src/data/updates";
 
 // Brand colors
@@ -70,102 +70,6 @@ function formatCount(n = 0) {
   return String(n);
 }
 
-/* ---------- Small View-built glyphs ---------- */
-
-function PlusGlyph({ color, size = 20 }) {
-  return (
-    <View
-      style={{
-        width: size,
-        height: size,
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <View style={[styles.plusBar, { width: size, backgroundColor: color }]} />
-      <View
-        style={[
-          styles.plusBar,
-          {
-            width: size,
-            backgroundColor: color,
-            position: "absolute",
-            transform: [{ rotate: "90deg" }],
-          },
-        ]}
-      />
-    </View>
-  );
-}
-
-function BellGlyph({ color }) {
-  return (
-    <View style={styles.bellWrap}>
-      <View style={[styles.bellKnob, { backgroundColor: color }]} />
-      <View style={[styles.bellBody, { borderColor: color }]} />
-      <View style={[styles.bellClapper, { backgroundColor: color }]} />
-    </View>
-  );
-}
-
-// Small globe shown next to the post time
-function GlobeGlyph({ color }) {
-  return (
-    <View style={[styles.globe, { borderColor: color }]}>
-      <View style={[styles.globeMeridian, { borderColor: color }]} />
-      <View style={[styles.globeEquator, { backgroundColor: color }]} />
-    </View>
-  );
-}
-
-// Speaker for the video pill; shows a slash when muted
-function SpeakerGlyph({ muted }) {
-  return (
-    <View style={styles.speaker}>
-      <View style={styles.speakerBody} />
-      <View style={styles.speakerCone} />
-      {muted ? (
-        <Text style={styles.speakerMute}>×</Text>
-      ) : (
-        <View style={styles.speakerWave} />
-      )}
-    </View>
-  );
-}
-
-function CommentGlyph({ color }) {
-  return (
-    <View style={styles.commentWrap}>
-      <View style={[styles.commentBubble, { borderColor: color }]} />
-      <View style={[styles.commentTail, { borderColor: color }]} />
-    </View>
-  );
-}
-
-function ShareGlyph({ color }) {
-  return (
-    <View style={styles.shareWrap}>
-      <Text style={[styles.shareArrow, { color }]}>↑</Text>
-      <View style={[styles.shareBox, { borderColor: color }]} />
-    </View>
-  );
-}
-
-function BookmarkGlyph({ color, filled }) {
-  return (
-    <View
-      style={{
-        width: 15,
-        height: 20,
-        borderWidth: 1.8,
-        borderColor: color,
-        borderRadius: 3,
-        backgroundColor: filled ? color : "transparent",
-      }}
-    />
-  );
-}
-
 /* ---------- Video ---------- */
 
 // Autoplays muted on a loop. Tap the video to pause / resume, tap the pill to
@@ -198,7 +102,7 @@ function VideoMedia({ uri, aspect, duration }) {
       >
         {!isPlaying && (
           <View style={styles.playCircle}>
-            <Text style={styles.playGlyph}>▶</Text>
+            <Icon name="play" color="#fff" size={26} />
           </View>
         )}
       </Pressable>
@@ -217,7 +121,7 @@ function VideoMedia({ uri, aspect, duration }) {
 function SoundPill({ muted, duration, onPress }) {
   const content = (
     <>
-      <SpeakerGlyph muted={muted} />
+      <Icon name={muted ? "speaker-off" : "speaker-on"} color="#fff" size={15} />
       {duration ? <Text style={styles.pillText}>{duration}</Text> : null}
     </>
   );
@@ -355,7 +259,7 @@ function PostHeader({ item, colors, following, onToggleFollow }) {
             {item.time}
           </Text>
           <View style={[styles.timeDivider, { backgroundColor: MUTED_LINE }]} />
-          <GlobeGlyph color={colors.textMuted} />
+          <Icon name="globe" color={colors.textMuted} size={13} />
         </View>
       </View>
 
@@ -485,14 +389,11 @@ function PostCard({ item, colors }) {
           hitSlop={8}
           style={styles.action}
         >
-          <Text
-            style={[
-              styles.heart,
-              { color: liked ? LIKE_PINK : colors.textMuted },
-            ]}
-          >
-            {liked ? "♥" : "♡"}
-          </Text>
+          <Icon
+            name="heart"
+            color={liked ? LIKE_PINK : colors.textMuted}
+            size={21}
+          />
           <Text style={[styles.actionCount, { color: colors.text }]}>
             {formatCount(likeCount)}
             <Text style={[styles.actionLabel, { color: colors.textMuted }]}>
@@ -507,7 +408,7 @@ function PostCard({ item, colors }) {
           hitSlop={8}
           style={[styles.action, { marginLeft: 20 }]}
         >
-          <CommentGlyph color={colors.text} />
+          <Icon name="comment" color={colors.text} size={20} />
           <Text style={[styles.actionCount, { color: colors.text }]}>
             {formatCount(item.comments ?? 0)}
             <Text style={[styles.actionLabel, { color: colors.textMuted }]}>
@@ -524,7 +425,7 @@ function PostCard({ item, colors }) {
           hitSlop={10}
           style={styles.iconBtn}
         >
-          <ShareGlyph color={colors.text} />
+          <Icon name="share" color={colors.text} size={20} />
         </Pressable>
         <Pressable
           onPress={() => setSaved((v) => !v)}
@@ -533,7 +434,7 @@ function PostCard({ item, colors }) {
           hitSlop={10}
           style={styles.iconBtn}
         >
-          <BookmarkGlyph color={colors.text} filled={saved} />
+          <Icon name="bookmark" color={colors.text} size={20} />
         </Pressable>
       </View>
     </View>
@@ -602,7 +503,7 @@ export default function UpdatesScreen() {
               }
               // onPress={() => router.push("/notifications")}
             >
-              <BellGlyph color={colors.text} />
+              <Icon name="bell" color={colors.text} />
             </GlassButton>
             {UNREAD_NOTIFICATIONS > 0 && (
               <View
@@ -612,10 +513,10 @@ export default function UpdatesScreen() {
             )}
           </View>
           <GlassButton size={HEADER_BTN} label="Search updates">
-            <SearchIcon color={colors.text} size={19} />
+            <Icon name="search" color={colors.text} size={19} />
           </GlassButton>
           <GlassButton size={HEADER_BTN} label="Add status">
-            <PlusGlyph color={colors.text} size={17} />
+            <Icon name="add" color={colors.text} size={17} />
           </GlassButton>
         </View>
       </View>
@@ -646,39 +547,6 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 26, fontWeight: "700" },
   headerActions: { flexDirection: "row", alignItems: "center", gap: 8 },
-
-  // notification bell
-  bellWrap: { width: 18, height: 20, alignItems: "center" },
-  bellKnob: { width: 3, height: 2.5, borderRadius: 1.5 },
-  bellBody: {
-    width: 15,
-    height: 13,
-    borderWidth: 1.8,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    borderBottomLeftRadius: 2,
-    borderBottomRightRadius: 2,
-  },
-  bellClapper: {
-    width: 6,
-    height: 3,
-    marginTop: 1.5,
-    borderBottomLeftRadius: 3,
-    borderBottomRightRadius: 3,
-  },
-  bellDot: {
-    position: "absolute",
-    top: 1,
-    right: 1,
-    width: 11,
-    height: 11,
-    borderRadius: 6,
-    borderWidth: 2,
-    backgroundColor: BELL_RED,
-  },
-
-  // plus glyph
-  plusBar: { height: 2.2, borderRadius: 1.5 },
 
   // sections
   sectionHeader: {
@@ -775,23 +643,6 @@ const styles = StyleSheet.create({
   postTime: { fontSize: 12.5 },
   timeDivider: { width: StyleSheet.hairlineWidth * 2, height: 12 },
 
-  globe: {
-    width: 13,
-    height: 13,
-    borderRadius: 7,
-    borderWidth: 1.2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  globeMeridian: {
-    position: "absolute",
-    width: 5,
-    height: 11,
-    borderRadius: 3,
-    borderWidth: 1.1,
-  },
-  globeEquator: { position: "absolute", width: 11, height: 1.1 },
-
   nameRow: { flexDirection: "row", alignItems: "center", gap: 5 },
   verifiedBadge: {
     width: 16,
@@ -857,7 +708,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  playGlyph: { color: "#fff", fontSize: 22, marginLeft: 3 },
 
   // sound / duration pill
   pill: {
@@ -873,35 +723,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
   },
   pillText: { color: "#fff", fontSize: 14, fontWeight: "500" },
-  speaker: { width: 20, height: 16, flexDirection: "row", alignItems: "center" },
-  speakerBody: { width: 4, height: 7, backgroundColor: "#fff" },
-  speakerCone: {
-    width: 0,
-    height: 0,
-    borderTopWidth: 6,
-    borderBottomWidth: 6,
-    borderRightWidth: 7,
-    borderTopColor: "transparent",
-    borderBottomColor: "transparent",
-    borderRightColor: "#fff",
-    transform: [{ rotate: "180deg" }],
-  },
-  speakerWave: {
-    width: 6,
-    height: 12,
-    marginLeft: 1,
-    borderWidth: 1.6,
-    borderLeftWidth: 0,
-    borderColor: "#fff",
-    borderTopRightRadius: 6,
-    borderBottomRightRadius: 6,
-  },
-  speakerMute: {
-    color: "#fff",
-    fontSize: 16,
-    lineHeight: 16,
-    marginLeft: 2,
-  },
 
   // actions
   actions: {
@@ -913,40 +734,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   action: { flexDirection: "row", alignItems: "center", gap: 7 },
-  heart: { fontSize: 23, lineHeight: 25 },
   actionCount: { fontSize: 14, fontWeight: "700" },
   actionLabel: { fontWeight: "400" },
   iconBtn: { marginLeft: 20 },
-
-  commentWrap: { width: 20, height: 20 },
-  commentBubble: {
-    width: 19,
-    height: 19,
-    borderRadius: 10,
-    borderWidth: 1.8,
-  },
-  commentTail: {
-    position: "absolute",
-    left: 1,
-    bottom: 0,
-    width: 7,
-    height: 7,
-    borderLeftWidth: 1.8,
-    borderBottomWidth: 1.8,
-    borderBottomLeftRadius: 2,
-    backgroundColor: "transparent",
-  },
-
-  shareWrap: { width: 20, height: 22, alignItems: "center" },
-  shareArrow: { fontSize: 13, lineHeight: 14, fontWeight: "700" },
-  shareBox: {
-    position: "absolute",
-    bottom: 1,
-    width: 18,
-    height: 12,
-    borderWidth: 1.8,
-    borderTopWidth: 0,
-    borderBottomLeftRadius: 4,
-    borderBottomRightRadius: 4,
-  },
 });

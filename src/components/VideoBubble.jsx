@@ -1,6 +1,6 @@
 import { Text, View, StyleSheet } from "react-native";
 import MediaBubble from "./MediaBubble";
-import { PlayGlyph } from "./Icons";
+import Icon from "./icons";
 import { formatDuration } from "../utils/formatDuration";
 
 // Video message: thumbnail, play button and length. Optional caption like ImageBubble.
@@ -16,7 +16,7 @@ export default function VideoBubble({
     <>
       <View style={styles.center}>
         <View style={styles.playCircle}>
-          <PlayGlyph color="#fff" size={26} />
+          <Icon name="play" color="#fff" size={26} />
         </View>
       </View>
       <View style={styles.durationPill}>

@@ -4,18 +4,7 @@ import { useTheme } from "../../../src/theme/useTheme";
 import Avatar from "../../../src/components/Avatar";
 import GlassButton from "../../../src/components/GlassButton";
 import GlassSurface from "../../../src/components/GlassSurface";
-import {
-  EditIcon,
-  InfoCircleIcon,
-  SettingsIcon,
-  MoonIcon,
-  SunIcon,
-  LanguagesIcon2,
-  ShieldIcon,
-  CopyIcon,
-  LinkIcon,
-  LogOutIcon2,
-} from "../../../src/components/Icons";
+import Icon from "../../../src/components/icons";
 
 const USER = {
   name: "Wade Warren",
@@ -36,30 +25,47 @@ const SETTING_SECTIONS = [
   {
     id: "profile-section",
     data: [
-      { id: "edit", label: "Edit Profile", Icon: EditIcon, scheme: null },
-      { id: "view-archive", label: "Archived Chats", Icon: InfoCircleIcon, scheme: null },
-      { id: "starred", label: "Starred Messages", Icon: CopyIcon, scheme: null },
+      { id: "edit", label: "Edit Profile", icon: "edit", scheme: null },
+      {
+        id: "view-archive",
+        label: "Archived Chats",
+        icon: "archive",
+        scheme: null,
+      },
+      { id: "starred", label: "Starred Messages", icon: "star", scheme: null },
     ],
   },
   {
     id: "preferences-section",
     data: [
-      { id: "dark-mode", label: "Dark Mode", Icon: MoonIcon, scheme: null, showToggle: true },
-      { id: "language", label: "Language", Icon: LanguagesIcon2, scheme: null },
-      { id: "appearance", label: "Appearance", Icon: SunIcon, scheme: null },
+      {
+        id: "dark-mode",
+        label: "Dark Mode",
+        icon: "moon",
+        scheme: null,
+        showToggle: true,
+      },
+      { id: "language", label: "Language", icon: "languages", scheme: null },
+      { id: "appearance", label: "Appearance", icon: "sun", scheme: null },
     ],
   },
   {
     id: "privacy-section",
     data: [
-      { id: "privacy", label: "Privacy", Icon: ShieldIcon, scheme: null },
-      { id: "link-devices", label: "Link Devices", Icon: LinkIcon, scheme: null },
+      { id: "privacy", label: "Privacy", icon: "shield", scheme: null },
+      { id: "link-devices", label: "Link Devices", icon: "link", scheme: null },
     ],
   },
   {
     id: "account-section",
     data: [
-      { id: "logout", label: "Log Out", Icon: LogOutIcon2, scheme: "dark", labelColor: "#ff7a7a" },
+      {
+        id: "logout",
+        label: "Log Out",
+        icon: "logout",
+        scheme: "dark",
+        labelColor: "#ff7a7a",
+      },
     ],
   },
 ];
@@ -90,7 +96,7 @@ function SettingRow({ item }) {
       }
     >
       <View style={[styles.settingIcon, { backgroundColor: colors.primarySoft }]}>
-        <item.Icon color={colors.primary} size={22} />
+        <Icon name={item.icon} color={colors.primary} size={22} />
       </View>
       <Text style={[styles.settingLabel, { color: iconColor }]}>{item.label}</Text>
       {item.showToggle && (
@@ -98,19 +104,12 @@ function SettingRow({ item }) {
           <View style={styles.toggleHandle} />
         </View>
       )}
-      {!item.showToggle && <InfoChevron color={colors.textMuted} />}
+      {!item.showToggle && (
+        <Icon name="chevron-right" color={colors.textMuted} size={18} />
+      )}
     </Pressable>
   );
 }
-
-const InfoChevron = ({ color }) => {
-  return (
-    <View style={styles.chevron}>
-      <View style={[styles.chevronBar, { backgroundColor: color }]} />
-      <View style={[styles.chevronBar, styles.chevronBar2, { backgroundColor: color }]} />
-    </View>
-  );
-};
 
 export default function ProfileScreen() {
   const { colors } = useTheme();
@@ -124,7 +123,7 @@ export default function ProfileScreen() {
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>Profile</Text>
         <GlassButton size={44} label="Settings">
-          <SettingsIcon color={colors.text} size={22} />
+          <Icon name="settings" color={colors.text} size={22} />
         </GlassButton>
       </View>
 
@@ -141,7 +140,7 @@ export default function ProfileScreen() {
               style={{ position: "absolute", bottom: 0, right: 0 }}
               label="Change photo"
             >
-              <EditIcon color={colors.text} size={20} />
+              <Icon name="edit" color={colors.text} size={20} />
             </GlassButton>
           </View>
 
@@ -233,21 +232,5 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 3,
     top: 2,
-  },
-  chevron: {
-    width: 18,
-    height: 18,
-    alignItems: "flex-end",
-    justifyContent: "center",
-  },
-  chevronBar: {
-    width: 8,
-    height: 1.6,
-    borderRadius: 1,
-    transform: [{ rotate: "25deg" }],
-  },
-  chevronBar2: {
-    position: "absolute",
-    transform: [{ rotate: "-25deg" }],
   },
 });

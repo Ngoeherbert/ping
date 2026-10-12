@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -36,7 +36,7 @@ import ChatBackground from "../../../src/components/ChatBackground";
 import ReactionPills from "../../../src/components/ReactionPills";
 import MessageActionSheet from "../../../src/components/Messageactionsheet";
 import EmojiBurst, { detectBurst } from "../../../src/components/EmojiBurst";
-import { BackIcon } from "../../../src/components/Icons";
+import Icon from "../../../src/components/icons";
 import { BubbleStyleProvider } from "../../../src/components/BubbleShell";
 import { getConversation } from "../../../src/data/chats";
 
@@ -190,7 +190,7 @@ function SwipeRow({
             iconStyle,
           ]}
         >
-          <BackIcon color={iconColor} size={18} />
+          <Icon name="reply" color={iconColor} size={18} />
         </Animated.View>
         <Animated.View style={rowStyle}>{children}</Animated.View>
       </View>
@@ -256,15 +256,18 @@ export default function ChatThreadScreen() {
     if (emojis) setBurst({ id: Date.now(), emojis });
   };
 
-  // Also celebrate when a matching message arrives from the other side
-  const prevCount = useRef(messages.length);
-  useEffect(() => {
-    const last = messages[messages.length - 1];
-    if (messages.length > prevCount.current && last && !last.isMine) {
-      playBurst(last.text ?? last.caption);
+  // Also celebrate when a matching message arrives from the other side.
+  // Derived during render (adjust state while rendering): when the list grows,
+  // check the newest message directly. No effect, no refs, no chained calls.
+  const [seenCount, setSeenCount] = useState(messages.length);
+  if (messages.length > seenCount) {
+    setSeenCount(messages.length);
+    const newest = messages[messages.length - 1];
+    if (newest && !newest.isMine) {
+      const emojis = detectBurst(newest.text ?? newest.caption);
+      if (emojis) setBurst({ id: newest.id ?? messages.length, emojis });
     }
-    prevCount.current = messages.length;
-  }, [messages]);
+  }
 
   const isGroup = !!conversation?.isGroup;
   // Every chat gets the glass look. Give a chat its own `wallpaper` URL, or
