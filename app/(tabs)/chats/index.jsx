@@ -263,7 +263,7 @@ function ConversationRow({ item, onPress, onLongPress, selecting, selected }) {
   const previewColor = hasUnread ? colors.text : colors.textMuted;
   // Only messages I sent show ticks. Set `status` on a message to
   // "sent" | "delivered" | "seen"; it defaults to "sent" (1 tick).
-  const status = last.status ?? "sent";
+  const status = last?.status ?? "sent";
 
   return (
     <Pressable
@@ -317,7 +317,7 @@ function ConversationRow({ item, onPress, onLongPress, selecting, selected }) {
           ) : null}
         </View>
         <View style={styles.previewLine}>
-          {last.isMine ? (
+          {last?.isMine ? (
             <MessageTicks status={status} mutedColor={colors.textMuted} />
           ) : null}
           {preview.kind ? (
@@ -346,7 +346,7 @@ function ConversationRow({ item, onPress, onLongPress, selecting, selected }) {
             },
           ]}
         >
-          {last.time}
+          {last?.time}
         </Text>
         <View style={styles.rightBottom}>
           {item.pinned ? (
@@ -635,6 +635,11 @@ function SwipeableConversation({
   const startDrag = () => {
     clearTimeout(guardTimer.current);
     dragging.current = true;
+    // Safety net: if the drag is cancelled (e.g. a long press opens the modal
+    // and steals the touch) no "end" event fires, so never stay stuck on.
+    guardTimer.current = setTimeout(() => {
+      dragging.current = false;
+    }, 1200);
   };
   const endDrag = () => {
     clearTimeout(guardTimer.current);
@@ -657,7 +662,11 @@ function SwipeableConversation({
   };
 
   const handleLongPress = (e) => {
-    if (dragging.current || isOpen.current) return;
+    // A long press only fires when the finger stayed put, so it is never a
+    // swipe. Clear any stale drag flag instead of letting it block the menu.
+    clearTimeout(guardTimer.current);
+    dragging.current = false;
+    if (isOpen.current) return;
     onLongPress(e);
   };
 
@@ -916,7 +925,15 @@ function ChatPreview({ chat, onPress }) {
   );
 }
 
-function MenuRow({ icon, label, onPress, textColor, destructive, dangerColor, trailing }) {
+function MenuRow({
+  icon,
+  label,
+  onPress,
+  textColor,
+  destructive,
+  dangerColor,
+  trailing,
+}) {
   return (
     <Pressable
       onPress={onPress}
@@ -991,118 +1008,103 @@ function ChatContextMenu({
           textColor={menuText}
           dangerColor={menuDanger}
           label={chat.pinned ? "Unpin" : "Pin"}
-            onPress={onPin}
+          onPress={onPin}
+          icon={
+            <Icon
+              name={chat.pinned ? "pin-off" : "pin"}
+              color={menuIcon}
+              size={20}
+              strokeWidth={2}
+            />
+          }
+        />
+        <MenuRow
+          textColor={menuText}
+          dangerColor={menuDanger}
+          label={chat.muted ? "Unmute" : "Mute"}
+          onPress={onMute}
+          icon={<Icon name="mute" color={menuIcon} size={20} strokeWidth={2} />}
+        />
+        <MenuRow
+          textColor={menuText}
+          dangerColor={menuDanger}
+          label={unread ? "Mark as read" : "Mark as unread"}
+          onPress={onToggleRead}
+          icon={
+            <Icon
+              name="comment-block"
+              color={menuIcon}
+              size={20}
+              strokeWidth={2}
+            />
+          }
+        />
+        <MenuRow
+          textColor={menuText}
+          dangerColor={menuDanger}
+          label={chat.archived ? "Unarchive" : "Archive"}
+          onPress={onArchive}
+          icon={
+            <Icon name="archive" color={menuIcon} size={20} strokeWidth={2} />
+          }
+        />
+        <MenuRow
+          textColor={menuText}
+          dangerColor={menuDanger}
+          label="Clear chat"
+          onPress={onClear}
+          icon={
+            <Icon name="clear" color={menuIcon} size={20} strokeWidth={2} />
+          }
+        />
+        {isGroup ? (
+          <MenuRow
+            textColor={menuText}
+            dangerColor={menuDanger}
+            label="Exit group"
+            onPress={onExitGroup}
             icon={
               <Icon
-                name={chat.pinned ? "pin-off" : "pin"}
-                color={menuIcon}
+                name="logout"
+                color={menuDanger}
                 size={20}
                 strokeWidth={2}
               />
             }
           />
-          <MenuRow
-            textColor={menuText}
-            dangerColor={menuDanger}
-            label={chat.muted ? "Unmute" : "Mute"}
-            onPress={onMute}
-            icon={
-              <Icon name="mute" color={menuIcon} size={20} strokeWidth={2} />
-            }
-          />
-          <MenuRow
-            textColor={menuText}
-            dangerColor={menuDanger}
-            label={unread ? "Mark as read" : "Mark as unread"}
-            onPress={onToggleRead}
-            icon={
-              <Icon
-                name="comment-block"
-                color={menuIcon}
-                size={20}
-                strokeWidth={2}
-              />
-            }
-          />
-          <MenuRow
-            textColor={menuText}
-            dangerColor={menuDanger}
-            label={chat.archived ? "Unarchive" : "Archive"}
-            onPress={onArchive}
-            icon={
-              <Icon
-                name="archive"
-                color={menuIcon}
-                size={20}
-                strokeWidth={2}
-              />
-            }
-          />
-          <MenuRow
-            textColor={menuText}
-            dangerColor={menuDanger}
-            label="Clear chat"
-            onPress={onClear}
-            icon={
-              <Icon
-                name="clear"
-                color={menuIcon}
-                size={20}
-                strokeWidth={2}
-              />
-            }
-          />
-          {isGroup ? (
+        ) : (
+          <>
             <MenuRow
               textColor={menuText}
               dangerColor={menuDanger}
-              label="Exit group"
-              destructive
-              onPress={onExitGroup}
+              label={chat.blocked ? "Unblock user" : "Block user"}
+              onPress={onBlock}
               icon={
                 <Icon
-                  name="exit"
+                  name="block"
                   color={menuDanger}
                   size={20}
                   strokeWidth={2}
                 />
               }
             />
-          ) : (
-            <>
-              <MenuRow
-                textColor={menuText}
-                dangerColor={menuDanger}
-                label={chat.blocked ? "Unblock user" : "Block user"}
-                destructive
-                onPress={onBlock}
-                icon={
-                  <Icon
-                    name="block"
-                    color={menuDanger}
-                    size={20}
-                    strokeWidth={2}
-                  />
-                }
-              />
-              <MenuRow
-                textColor={menuText}
-                dangerColor={menuDanger}
-                label="Delete chat"
-                destructive
-                onPress={onDelete}
-                icon={
-                  <Icon
-                    name="delete-chat"
-                    color={menuDanger}
-                    size={20}
-                    strokeWidth={2}
-                  />
-                }
-              />
-            </>
-          )}
-        </>
+            <MenuRow
+              textColor={menuText}
+              dangerColor={menuDanger}
+              label="Delete chat"
+              onPress={onDelete}
+              icon={
+                <Icon
+                  name="delete"
+                  color={menuDanger}
+                  size={20}
+                  strokeWidth={2}
+                />
+              }
+            />
+          </>
+        )}
+      </>
     </GlassSurface>
   ) : null;
 
@@ -1428,8 +1430,7 @@ export default function ChatsScreen() {
   const deleteChat = (c) => {
     if (!c) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    const title =
-      getKind(c) === "group" ? "Exit group?" : "Delete this chat?";
+    const title = getKind(c) === "group" ? "Exit group?" : "Delete this chat?";
     const body =
       getKind(c) === "group"
         ? `You will leave "${c.name}".`
@@ -1476,19 +1477,6 @@ export default function ChatsScreen() {
     patch(c.id, { blocked: !was, muted: !was ? true : c.muted });
     showNotice(was ? "User unblocked" : "User blocked", () =>
       patch(c.id, { blocked: was }),
-    );
-  };
-
-  const setFolder = (c, key) => {
-    if (!c) return;
-    Haptics.selectionAsync();
-    // Folders UI was removed from the menu; keep the flag logic so existing
-    // folder tabs keep working.
-    const before = c.folder ?? null;
-    patch(c.id, { folder: key });
-    const label = FOLDERS.find((f) => f.key === key)?.label;
-    showNotice(key ? `Added to ${label}` : "Removed from folder", () =>
-      patch(c.id, { folder: before }),
     );
   };
 
@@ -1710,7 +1698,7 @@ export default function ChatsScreen() {
             },
           ]}
         >
-          <Icon name="add-chat" color={colors.onPrimary} size={26} />
+          <Icon name="add" color={colors.onPrimary} size={26} />
         </Pressable>
       )}
 

@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../theme/useTheme";
+import { glassColors } from "../theme/chatTheme";
 import Icon from "./icons";
 import GlassSurface from "./GlassSurface";
 
@@ -78,8 +79,11 @@ const ATTACH_ITEMS = [
   { key: "contact", label: "Contact", icon: "contact", color: "#30B0C7" },
 ];
 
-function AttachPanel({ onSelect }) {
+function AttachPanel({ onSelect, onGlass }) {
   const { colors } = useTheme();
+  // No surface behind the grid (it sits straight on the chat background), so
+  // wallpaper chats need white labels instead of the theme's text colour.
+  const labelColor = onGlass ? glassColors.text : colors.text;
   return (
     <View style={styles.attachGrid}>
       {ATTACH_ITEMS.map((item) => (
@@ -96,7 +100,7 @@ function AttachPanel({ onSelect }) {
           <View style={[styles.attachCircle, { backgroundColor: item.color }]}>
             <Icon name={item.icon} size={26} color="#fff" />
           </View>
-          <Text style={[styles.attachLabel, { color: colors.text }]}>
+          <Text style={[styles.attachLabel, { color: labelColor }]}>
             {item.label}
           </Text>
         </Pressable>
@@ -291,7 +295,9 @@ export default function ComposerPanel({
   onSend, // ({ type: "gif" | "sticker", id, uri?, source? }) => void
   stickers = [],
   gifs = [],
+  onGlass = false,
 }) {
+  const insets = useSafeAreaInsets();
   const [searching, setSearching] = useState(false);
   // Reset search whenever the panel closes or switches. Derived during render
   // (adjust state while rendering): if the mode changed since the last render,
@@ -304,30 +310,40 @@ export default function ComposerPanel({
 
   if (!mode) return null;
 
+  // Same surface as the header's back button: GlassSurface with the chat's
+  // scheme (dark glass over a wallpaper, theme glass otherwise).
+  // The chat screen pads its bottom safe area, which leaves a strip below the
+  // panel. Grow into it (height + negative margin = no layout shift) so the
+  // glass runs flush to the screen edge; the inner padding keeps content
+  // clear of the home indicator.
   return (
     <GlassSurface
+      scheme={onGlass ? "dark" : undefined}
       style={[
         styles.panel,
         {
-          height,
+          height: height + insets.bottom,
+          marginBottom: -insets.bottom,
           borderTopWidth: 0, // GlassSurface paints its own hairline border
         },
       ]}
     >
-      {mode === "attach" ? (
-        <AttachPanel onSelect={onAttach} />
-      ) : (
-        <StickerPanel
-          stickers={stickers}
-          gifs={gifs}
-          onSend={(item) => {
-            setSearching(false);
-            onSend?.(item);
-          }}
-          searching={searching}
-          setSearching={setSearching}
-        />
-      )}
+      <View style={{ flex: 1, paddingBottom: insets.bottom }}>
+        {mode === "attach" ? (
+          <AttachPanel onSelect={onAttach} onGlass={onGlass} />
+        ) : (
+          <StickerPanel
+            stickers={stickers}
+            gifs={gifs}
+            onSend={(item) => {
+              setSearching(false);
+              onSend?.(item);
+            }}
+            searching={searching}
+            setSearching={setSearching}
+          />
+        )}
+      </View>
     </GlassSurface>
   );
 }

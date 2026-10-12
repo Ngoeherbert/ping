@@ -15,10 +15,10 @@ import { HugeiconsIcon } from "@hugeicons/react-native";
 import {
   Add01Icon,
   ArrowLeft01Icon,
-  ArrowRight01Icon,
+  ArrowReloadHorizontalIcon,
   Archive02Icon,
   BellIcon,
-  Bookmark01Icon,
+  Bookmark02Icon,
   BubbleChatTemporaryIcon,
   Call02Icon,
   CallIncoming01Icon,
@@ -30,21 +30,16 @@ import {
   CommentBlock01Icon,
   Copy01Icon,
   Delete02Icon,
-  Delete01Icon,
   Edit01Icon,
-  Eraser01Icon,
+  CommentRemove01Icon,
   Folder01Icon,
-  Logout01Icon,
-  Logout02Icon,
-  ForwardIcon,
+  LinkForwardIcon,
   Globe02Icon,
   HeartIcon,
-  Home01Icon,
+  Home05Icon,
   InformationCircleIcon,
   LanguagesIcon,
-  Link01Icon,
   LogOutIcon,
-  MessageAdd01Icon,
   Mic01Icon,
   Moon01Icon,
   MoreHorizontalIcon,
@@ -54,11 +49,11 @@ import {
   PinOffIcon,
   PlayIcon,
   PlayListIcon,
-  ReplyIcon,
+  LinkBackwardIcon,
   Search01Icon,
   SentIcon,
   Settings01Icon,
-  Share01Icon,
+  Share03Icon,
   Shield01Icon,
   StarIcon,
   StickerIcon,
@@ -77,17 +72,17 @@ import {
   File02Icon,
   Image01Icon,
   KeyboardIcon,
+  DeviceAccessIcon
 } from "@hugeicons/core-free-icons";
 import { useTheme } from "../theme/useTheme";
 
 const ICONS = {
   // navigation / general
   back: ArrowLeft01Icon,
-  "chevron-right": ArrowRight01Icon,
   search: Search01Icon,
   close: Cancel01Icon,
   add: Add01Icon,
-  home: Home01Icon,
+  home: Home05Icon,
   user: UserIcon,
   settings: Settings01Icon,
   edit: Edit01Icon,
@@ -95,17 +90,13 @@ const ICONS = {
   more: MoreHorizontalIcon,
 
   // chat list
-  "add-chat": MessageAdd01Icon,
   archive: Archive02Icon,
-  trash: Delete02Icon,
-  "delete-chat": Delete01Icon,
+  delete: Delete02Icon,
   pin: PinIcon,
   "pin-off": PinOffIcon,
-  clear: Eraser01Icon,
+  clear: CommentRemove01Icon,
   block: UserBlock01Icon,
   "block-alt": UserBlock02Icon,
-  exit: Logout01Icon,
-  "exit-alt": Logout02Icon,
   mute: NotificationOff01Icon,
   tick: Tick02Icon,
   star: StarIcon,
@@ -117,8 +108,8 @@ const ICONS = {
   sticker: StickerIcon,
   send: SentIcon,
   copy: Copy01Icon,
-  reply: ReplyIcon,
-  forward: ForwardIcon,
+  reply: LinkBackwardIcon,
+  forward: LinkForwardIcon,
 
   // media playback
   play: PlayIcon,
@@ -140,15 +131,15 @@ const ICONS = {
   heart: HeartIcon,
   comment: Comment01Icon,
   "comment-block": CommentBlock01Icon,
-  share: Share01Icon,
-  bookmark: Bookmark01Icon,
+  share: Share03Icon,
+  bookmark: Bookmark02Icon,
+  repost: ArrowReloadHorizontalIcon,
 
   // profile
   moon: Moon01Icon,
   sun: Sun03Icon,
   languages: LanguagesIcon,
   shield: Shield01Icon,
-  link: Link01Icon,
   logout: LogOutIcon,
 
   // bottom tab bar
@@ -163,6 +154,7 @@ const ICONS = {
   file: File02Icon,
   image: Image01Icon,
   keyboard: KeyboardIcon,
+  link: DeviceAccessIcon,
 };
 
 export default function Icon({

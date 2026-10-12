@@ -105,7 +105,7 @@ export default function MessageActionSheet({
     {
       key: "delete",
       label: "Delete",
-      icon: "trash",
+      icon: "delete",
       onPress: onDelete,
       danger: true,
     },

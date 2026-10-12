@@ -108,6 +108,7 @@ export default function ChatComposer({
       <ComposerPanel
         mode={panel}
         height={panelHeight}
+        onGlass={onGlass}
         stickers={stickers}
         gifs={gifs}
         onAttach={(key) => {

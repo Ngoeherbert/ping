@@ -6,7 +6,7 @@ import GlassSurface from "./GlassSurface";
 import Icon from "./icons";
 
 const TABS = {
-  updates: { label: "Updates", icon: "updates" },
+  updates: { label: "Feeds", icon: "home" },
   calls: { label: "Calls", icon: "calls" },
   reels: { label: "Reels", icon: "reels" },
   chats: { label: "Chats", icon: "chats" },

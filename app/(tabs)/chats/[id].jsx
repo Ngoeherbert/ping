@@ -114,6 +114,17 @@ function SwipeRow({
   const dir = isMine ? -1 : 1;
   const x = useSharedValue(0);
   const armed = useSharedValue(false);
+  // Bumped after every long press to give the row a fresh gesture handler.
+  // The action sheet steals the touch, so the old handler never receives its
+  // "end" event and would stay stuck, blocking the next long press.
+  const [gestureKey, setGestureKey] = useState(0);
+
+  const fireLongPress = () => {
+    x.value = 0;
+    armed.value = false;
+    onLongPress();
+    setGestureKey((k) => k + 1);
+  };
 
   const pan = Gesture.Pan()
     // don't start in the edge strips, so the back swipe never triggers a reply
@@ -147,8 +158,9 @@ function SwipeRow({
 
   const hold = Gesture.LongPress()
     .minDuration(380)
+    .maxDistance(24) // tolerate a little finger drift while holding
     .onStart(() => {
-      runOnJS(onLongPress)();
+      runOnJS(fireLongPress)();
     });
 
   const gesture = Gesture.Race(pan, hold);
@@ -179,7 +191,7 @@ function SwipeRow({
   });
 
   return (
-    <GestureDetector gesture={gesture}>
+    <GestureDetector key={gestureKey} gesture={gesture}>
       <View>
         <Animated.View
           pointerEvents="none"

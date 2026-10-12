@@ -49,7 +49,7 @@ export default function ChatHeader({ conversation, onGlass = false }) {
           <Icon name="video" color={action} size={24} />
         </Pressable>
         <Pressable hitSlop={8} accessibilityRole="button" accessibilityLabel="Voice call">
-          <Icon name="mic" color={action} size={22} />
+          <Icon name="calls" color={action} size={22} />
         </Pressable>
       </GlassSurface>
     </View>
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     borderRadius: 23,
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: 20,
     paddingHorizontal: 14,
   },
 });
