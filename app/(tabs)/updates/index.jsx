@@ -1,17 +1,17 @@
 import { useState } from "react";
 import {
   FlatList,
-  Image,
-  ImageBackground,
   Pressable,
   Text,
   View,
   StyleSheet,
 } from "react-native";
+import { Image } from "expo-image";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { router } from "expo-router";
 import { useEvent } from "expo";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useTheme } from "../../../src/theme/useTheme";
@@ -121,7 +121,11 @@ function VideoMedia({ uri, aspect, duration }) {
 function SoundPill({ muted, duration, onPress }) {
   const content = (
     <>
-      <Icon name={muted ? "speaker-off" : "speaker-on"} color="#fff" size={15} />
+      <Icon
+        name={muted ? "speaker-off" : "speaker-on"}
+        color="#fff"
+        size={15}
+      />
       {duration ? <Text style={styles.pillText}>{duration}</Text> : null}
     </>
   );
@@ -183,16 +187,25 @@ function StoryCard({ item, colors }) {
 
   return (
     <Pressable
+      onPress={() => router.push(`/updates/${item.id}`)}
       accessibilityRole="button"
-      accessibilityLabel={`View ${item.name}'s story`}
+      accessibilityLabel={
+        item.isMine ? "View your story" : `View ${item.name}'s story`
+      }
       style={({ pressed }) => [styles.card, pressed && { opacity: 0.85 }]}
     >
-      <ImageBackground
-        source={{ uri: cover }}
+      <View
         style={[styles.cardImage, { backgroundColor: colors.surface }]}
-        imageStyle={{ borderRadius: CARD_RADIUS }}
-        resizeMode="cover"
       >
+        <Image
+          source={{ uri: cover }}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          transition={150}
+          cachePolicy="memory-disk"
+          recyclingKey={item.id}
+          priority="high"
+        />
         <View style={styles.cardFooter}>
           <View style={[styles.cardRing, { borderColor: ringColor }]}>
             <Avatar
@@ -206,7 +219,42 @@ function StoryCard({ item, colors }) {
             {item.name}
           </Text>
         </View>
-      </ImageBackground>
+      </View>
+    </Pressable>
+  );
+}
+
+// Trailing tile in the story row: jumps to the "All stories" screen.
+function MoreStoriesCard({ colors, count }) {
+  return (
+    <Pressable
+      onPress={() => router.push("/updates/all")}
+      accessibilityRole="button"
+      accessibilityLabel="View more stories"
+      style={({ pressed }) => [
+        styles.card,
+        styles.moreCard,
+        { backgroundColor: colors.surface },
+        pressed && { opacity: 0.85 },
+      ]}
+    >
+      <View style={styles.moreCenter}>
+        <View style={[styles.moreCircle, { borderColor: MUTED_LINE }]}>
+          <Icon name="arrow-right" color={colors.text} size={20} />
+        </View>
+        <Text
+          style={[styles.moreLabel, { color: colors.text }]}
+          numberOfLines={1}
+        >
+          View more
+        </Text>
+        <Text
+          style={[styles.moreCount, { color: colors.textMuted }]}
+          numberOfLines={1}
+        >
+          {count} stories
+        </Text>
+      </View>
     </Pressable>
   );
 }
@@ -368,9 +416,15 @@ function PostCard({ item, colors }) {
                 StyleSheet.absoluteFill,
                 { backgroundColor: colors.background },
               ]}
-              resizeMode="cover"
+              contentFit="cover"
+              transition={200}
+              cachePolicy="memory-disk"
+              recyclingKey={item.id}
+              priority="high"
             />
-            {isVideo ? <SoundPill muted={false} duration={item.videoDuration} /> : null}
+            {isVideo ? (
+              <SoundPill muted={false} duration={item.videoDuration} />
+            ) : null}
           </View>
         </View>
       ) : null}
@@ -450,6 +504,8 @@ export default function UpdatesScreen() {
   const mine = STORIES.find((s) => s.isMine);
   const others = STORIES.filter((s) => !s.isMine);
   const storyData = mine ? [mine, ...others] : others;
+  // `mine.hasStory` (see src/data/updates.js) decides whether the first tile
+  // is the user's own story card or the "Start a story" tile.
 
   const ListHeader = (
     <View>
@@ -466,8 +522,11 @@ export default function UpdatesScreen() {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.storiesRow}
+        ListFooterComponent={
+          <MoreStoriesCard colors={colors} count={storyData.length} />
+        }
         renderItem={({ item }) =>
-          item.isMine ? (
+          item.isMine && !item.hasStory ? (
             <StartStoryCard item={item} colors={colors} />
           ) : (
             <StoryCard item={item} colors={colors} />
@@ -592,6 +651,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+
+  // "View more" card (trailing tile in the story row)
+  moreCard: { borderWidth: 1, borderColor: MUTED_LINE },
+  moreCenter: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingHorizontal: 8,
+  },
+  moreCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  moreLabel: { fontSize: 13, fontWeight: "600", textAlign: "center" },
+  moreCount: { fontSize: 11.5, textAlign: "center" },
 
   // "Start a story" card
   startCard: { alignItems: "center" },

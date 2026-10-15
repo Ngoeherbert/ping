@@ -314,7 +314,7 @@ function FavoritePopOut({ focus, colors, onClose, onRemove }) {
           <Text style={[styles.popMenuText, { color: MISSED_RED }]}>
             Remove from Favorites
           </Text>
-          <Icon name="trash" color={MISSED_RED} size={18} />
+          <Icon name="delete" color={MISSED_RED} size={18} />
         </Pressable>
       </Animated.View>
     </Modal>
@@ -494,7 +494,7 @@ function SwipeRow({
             pressed && { opacity: 0.7 },
           ]}
         >
-          <Icon name="trash" color="#fff" size={22} />
+          <Icon name="delete" color="#fff" size={22} />
         </Pressable>
       </View>
     </ScrollView>
@@ -648,7 +648,7 @@ export default function CallsScreen() {
           >
             <View style={{ opacity: selectedCount === 0 ? 0.4 : 1 }}>
               <Icon
-                name="trash"
+                name="delete"
                 color={selectedCount === 0 ? colors.textMuted : MISSED_RED}
               />
             </View>

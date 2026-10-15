@@ -22,8 +22,52 @@ export const STORIES = [
     id: "my-status",
     name: "You",
     avatar: face(47),
-    time: "Tap to add status",
+    time: "2h ago",
     isMine: true,
+    // `hasStory` marks that the current user has an active story: the feed
+    // then renders a real story card (instead of "Start a story") and the
+    // story viewer swaps save / repost / reply / react for the viewers list.
+    hasStory: true,
+    cover: photo("story-you", 720, 1280),
+    slides: [
+      {
+        image: photo("story-you", 720, 1280),
+        caption: "Coffee first ☕️",
+        time: "2h ago",
+      },
+      {
+        image: photo("story-you-2", 720, 1280),
+        caption: "Golden hour walk 🌇",
+        time: "1h ago",
+      },
+    ],
+    // People who viewed my story. `reaction` is optional - when present the
+    // viewers sheet shows the emoji beside that viewer.
+    viewers: [
+      {
+        id: "v1",
+        name: "Esther Howard",
+        avatar: face(32),
+        time: "12m ago",
+        reaction: "❤️",
+      },
+      { id: "v2", name: "Jenny Wilson", avatar: face(5), time: "38m ago" },
+      {
+        id: "v3",
+        name: "Guy Hawkins",
+        avatar: face(12),
+        time: "1h ago",
+        reaction: "🔥",
+      },
+      { id: "v4", name: "Kristin Watson", avatar: face(25), time: "1h ago" },
+      {
+        id: "v5",
+        name: "Annette Black",
+        avatar: face(44),
+        time: "2h ago",
+        reaction: "😂",
+      },
+    ],
   },
   {
     id: "1",
@@ -31,6 +75,14 @@ export const STORIES = [
     avatar: face(32),
     time: "30 min ago",
     isMine: false,
+    cover: photo("story-esther", 720, 1280),
+    slides: [
+      {
+        image: photo("story-esther", 720, 1280),
+        caption: "Morning light hits different ✨",
+      },
+      { image: photo("story-esther-2", 720, 1280), time: "just now" },
+    ],
   },
   {
     id: "2",
@@ -38,6 +90,7 @@ export const STORIES = [
     avatar: face(5),
     time: "2 hours ago",
     isMine: false,
+    cover: photo("story-jenny", 720, 1280),
   },
   {
     id: "3",
@@ -45,6 +98,21 @@ export const STORIES = [
     avatar: face(12),
     time: "4 hours ago",
     isMine: false,
+    cover: photo("story-guy", 720, 1280),
+    // Slide 2 is a video story: long-press fast-forwards it instead of
+    // pausing (image slides pause their timer while held).
+    slides: [
+      {
+        image: photo("story-guy", 720, 1280),
+        caption: "Trail day 🥾",
+        time: "4 hours ago",
+      },
+      {
+        video: clip("ForBiggerBlazes"),
+        caption: "Sunset sprint 🏃",
+        time: "4 hours ago",
+      },
+    ],
   },
   {
     id: "4",
@@ -52,6 +120,15 @@ export const STORIES = [
     avatar: face(25),
     time: "6 hours ago",
     isMine: false,
+    cover: photo("story-kristin", 720, 1280),
+    slides: [
+      { image: photo("story-kristin", 720, 1280) },
+      {
+        image: photo("story-kristin-2", 720, 1280),
+        caption: "Golden hour 🌅",
+      },
+      { image: photo("story-kristin-3", 720, 1280) },
+    ],
   },
   {
     id: "5",
@@ -59,6 +136,9 @@ export const STORIES = [
     avatar: face(38),
     time: "Yesterday",
     isMine: false,
+    // muted stories are listed under the "Muted" filter (All stories screen)
+    muted: true,
+    cover: photo("story-ronald", 720, 1280),
   },
   {
     id: "6",
@@ -66,6 +146,7 @@ export const STORIES = [
     avatar: face(44),
     time: "Yesterday",
     isMine: false,
+    cover: photo("story-annette", 720, 1280),
   },
   {
     id: "7",
@@ -73,6 +154,8 @@ export const STORIES = [
     avatar: face(47),
     time: "Yesterday",
     isMine: false,
+    muted: true,
+    cover: photo("story-wade", 720, 1280),
   },
 ];
 

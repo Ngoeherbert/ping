@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { useSegments } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../theme/useTheme";
 import GlassSurface from "./GlassSurface";
 import Icon from "./icons";
+import { chromeStore } from "../state/chrome";
 
 const TABS = {
   updates: { label: "Feeds", icon: "home" },
@@ -18,11 +20,25 @@ const TABS = {
 export default function BottomBar({ state, navigation }) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+
+  // Screens can hide the whole bar (e.g. reels speed mode) via a shared store.
+  // No transform/opacity animation on the bar itself: animating an ancestor of
+  // GlassSurface breaks the blur (it renders into an offscreen/transformed
+  // layer and can't sample what's behind it), which kills the glass fill.
+  const [chromeHidden, setChromeHidden] = useState(chromeStore.getSnapshot());
+
+  useEffect(
+    () =>
+      chromeStore.subscribe(() => setChromeHidden(chromeStore.getSnapshot())),
+    [],
+  );
+
   const segments = useSegments();
 
   // Only show the bar on a tab's root screen: ["(tabs)", "chats"].
   // Anything deeper (e.g. ["(tabs)", "chats", "[id]"]) hides it.
   if (segments[0] === "(tabs)" && segments.length > 2) return null;
+  if (chromeHidden) return null;
 
   return (
     <View
